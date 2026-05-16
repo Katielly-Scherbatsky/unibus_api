@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  senha     String
+  tipo      String
+
+  associacaoId Int?
+  associacao   Associacao? @relation(fields: [associacaoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  associado Associado?
+}
+
+model Associacao {
+  id        Int    @id @default(autoincrement())
+  nome      String
+  sigla     String
+  cnpj      String
+  email     String
+  telefone  String
+  rua       String
+  bairro    String
+  numero    String
+  cep       String
+  cidade    String
+  estado    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  associados Associado[]
+  transportes Transporte[]
+  usuarios   Usuario[]
+}
+
+model Associado {
+  id              Int    @id @default(autoincrement())
+  usuarioId       Int @unique
+  associacaoId    Int
+  nome            String
+  cpf             String
+  telefone        String
+  faculdade       String
+  curso           String
+  periodo         String
+  matricula       String
+  status          String
+  rua             String
+  bairro          String
+  numero          String
+  cep             String
+  cidade          String
+
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
+  associacao  Associacao @relation(fields: [associacaoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  boletos       Boleto[]
+  solicitacoes  Solicitacao[]
+  avisos        Aviso[]
+  advertencias  Advertencia[]
+  presencas     PresencaChamada[]
+}
+
+model Transporte {
+  id            Int    @id @default(autoincrement())
+  associacaoId  Int @unique
+  poltronas     Int
+  horarioIda    String
+  horarioVolta  String
+  dias          String
+  pontoPartida  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  associacao Associacao @relation(fields: [associacaoId], references: [id])
+  chamadas   Chamada[]
+}
+
+model Chamada {
+  id            Int      @id @default(autoincrement())
+  transporteId  Int @unique
+  data          DateTime
+  periodo       String
+  status        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  transporte Transporte @relation(fields: [transporteId], references: [id])
+  presencas  PresencaChamada[]
+}
+
+model PresencaChamada {
+  id           Int  @id @default(autoincrement())
+  chamadaId    Int @unique
+  associadoId  Int @unique
+  presente     Boolean
+  poltrona     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  chamada   Chamada   @relation(fields: [chamadaId], references: [id])
+  associado Associado @relation(fields: [associadoId], references: [id])
+}
+
+model Solicitacao {
+  id           Int      @id @default(autoincrement())
+  associadoId  Int @unique
+  data         DateTime
+  tipo         String
+  motivo       String
+  status       String
+  descricao    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  associado Associado @relation(fields: [associadoId], references: [id])
+}
+
+model Boleto {
+  id           Int      @id @default(autoincrement())
+  associadoId  Int @unique
+  dataVencimento DateTime
+  valor        Float
+  status       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  associado Associado @relation(fields: [associadoId], references: [id])
+}
+
+model Advertencia {
+  id           Int      @id @default(autoincrement())
+  associadoId  Int @unique
+  data         DateTime
+  tipo         String
+  motivo       String
+  status       String
+  descricao    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+
+  associado Associado @relation(fields: [associadoId], references: [id])
+}
+
+model Aviso {
+  id           Int      @id @default(autoincrement())
+  associadoId  Int @unique
+  data         DateTime
+  tipo         String
+  motivo       String
+  status       String
+  descricao    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy Int?
+  updatedBy Int?
+  deletedBy Int?
+  deletedAt DateTime?
+  
+  associado Associado @relation(fields: [associadoId], references: [id])
+}
