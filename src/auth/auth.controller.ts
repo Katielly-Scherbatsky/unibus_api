@@ -19,6 +19,10 @@ export class AuthController {
       return { message: 'Credenciais inválidas' }
     }
 
+    if (usuario.primeiroAcesso) {
+      return { message: 'Primeiro acesso pendente. Por favor, acesse a tela de primeiro acesso para criar sua senha.', primeiroAcesso: true }
+    }
+
     return this.authService.realizarLogin(usuario)
   }
 
@@ -47,5 +51,10 @@ export class AuthController {
   @Post('recover/reset')
   async recoverReset(@Body() body: { email: string; codigo: string; novaSenha: string }) {
     return this.authService.resetarSenha(body.email, body.novaSenha);
+  }
+
+  @Post('primeiro-acesso')
+  async primeiroAcesso(@Body() body: { email: string; novaSenha: string }) {
+    return this.authService.primeiroAcesso(body.email, body.novaSenha);
   }
 }

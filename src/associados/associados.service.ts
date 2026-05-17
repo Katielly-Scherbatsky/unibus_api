@@ -18,6 +18,7 @@ export class AssociadosService {
           senha,
           tipo: 'ASSOCIADO',
           associacaoId,
+          primeiroAcesso: true,
         },
       });
 

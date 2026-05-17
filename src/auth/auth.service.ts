@@ -19,6 +19,7 @@ export class AuthService {
         email: usuario.email,
         tipo: usuario.tipo,
         associacaoId: usuario.associacaoId,
+        primeiroAcesso: usuario.primeiroAcesso,
       }
     };
   }
@@ -242,5 +243,32 @@ export class AuthService {
       data: { senha: senhaHash },
     });
     return { message: 'Senha alterada com sucesso.' };
+  }
+
+  async primeiroAcesso(email: string, novaSenha: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email },
+      include: { associado: true },
+    });
+
+    if (!usuario) {
+      throw new BadRequestException('E-mail não encontrado.');
+    }
+
+    if (usuario.tipo !== 'ASSOCIADO') {
+      throw new BadRequestException('Este fluxo é exclusivo para associados.');
+    }
+
+    if (!usuario.primeiroAcesso) {
+      throw new BadRequestException('Primeiro acesso já realizado. Utilize o login normal.');
+    }
+
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
+    const atualizado = await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { senha: senhaHash, primeiroAcesso: false },
+    });
+
+    return this.realizarLogin(atualizado);
   }
 }

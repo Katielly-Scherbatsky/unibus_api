@@ -8,10 +8,11 @@ datasource db {
 }
 
 model Usuario {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  senha     String
-  tipo      String
+  id             Int     @id @default(autoincrement())
+  email          String  @unique
+  senha          String
+  tipo           String
+  primeiroAcesso Boolean @default(true)
 
   associacaoId Int?
   associacao   Associacao? @relation(fields: [associacaoId], references: [id])
