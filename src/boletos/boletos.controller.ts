@@ -11,9 +11,11 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { BoletosService } from './boletos.service';
 import { CreateBoletoDto } from './dto/create-boleto.dto';
+import { CreateBoletoLoteDto } from './dto/create-boleto-lote.dto';
 import { UpdateBoletoDto } from './dto/update-boleto.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -26,7 +28,19 @@ export class BoletosController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateBoletoDto, @CurrentUser() user: any) {
+    if (user.tipo !== 'ADMIN') {
+      throw new ForbiddenException('Apenas administradores podem cadastrar boletos.');
+    }
     return this.service.create(dto, user.usuarioId);
+  }
+
+  @Post('lote')
+  @HttpCode(HttpStatus.CREATED)
+  createLote(@Body() dto: CreateBoletoLoteDto, @CurrentUser() user: any) {
+    if (user.tipo !== 'ADMIN') {
+      throw new ForbiddenException('Apenas administradores podem cadastrar boletos.');
+    }
+    return this.service.createLote(dto, user.usuarioId);
   }
 
   @Get()

@@ -33,10 +33,11 @@ export class AssociadosController {
 
   @Get()
   findAll(
+    @CurrentUser() user: any,
     @Query('status') status?: string,
     @Query('faculdade') faculdade?: string,
   ) {
-    return this.service.findAll(undefined, status, faculdade);
+    return this.service.findAll(user.associacaoId, status, faculdade);
   }
 
   @Get(':id')

@@ -26,7 +26,7 @@ export class AuthController {
     if (usuario.tipo === 'ASSOCIADO') {
       const associado = await this.authService.buscarAssociadoPorUsuarioId(usuario.id)
       if (associado?.primeiroAcesso) {
-        return { message: 'Primeiro acesso pendente. Por favor, acesse a tela de primeiro acesso para criar sua senha.', primeiroAcesso: true }
+        return { message: 'Acesse com o primeiro acesso para criar senha pro sistema.', primeiroAcesso: true }
       }
     }
 

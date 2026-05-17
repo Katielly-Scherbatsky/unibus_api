@@ -11,6 +11,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AvisosService } from './avisos.service';
 import { CreateAvisoDto } from './dto/create-aviso.dto';
@@ -26,6 +27,9 @@ export class AvisosController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateAvisoDto, @CurrentUser() user: any) {
+    if (user.tipo !== 'ADMIN') {
+      throw new ForbiddenException('Apenas administradores podem cadastrar avisos.');
+    }
     return this.service.create(dto, user.usuarioId);
   }
 

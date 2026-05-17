@@ -7,14 +7,39 @@ import { UpdateChamadaDto } from './dto/update-chamada.dto';
 export class ChamadasService {
   constructor(private prisma: PrismaService) {}
 
+  async verificarChamadaPorData(data: string) {
+    const inicio = new Date(data)
+    inicio.setHours(0, 0, 0, 0)
+    const fim = new Date(data)
+    fim.setHours(23, 59, 59, 999)
+
+    const chamada = await this.prisma.chamada.findFirst({
+      where: {
+        data: { gte: inicio, lte: fim },
+        deletedAt: null,
+        periodo: 'Ida',
+      },
+    })
+
+    return { existeIda: !!chamada }
+  }
+
+  private calcularStatusChamada(associados?: any[]) {
+    if (!associados || associados.length === 0) return 'PENDENTE'
+    const todosRevisados = associados.every(a => a.presente !== undefined && a.presente !== null)
+    return todosRevisados ? 'FINALIZADO' : 'PENDENTE'
+  }
+
   async create(dto: CreateChamadaDto, createdBy?: number) {
+    const status = this.calcularStatusChamada(dto.associados)
+
     return this.prisma.$transaction(async (tx) => {
       const chamada = await tx.chamada.create({
         data: {
-          transporteId: dto.transporteId,
+          transporteId: dto.transporteId ?? 1,
           data: new Date(dto.data),
           periodo: dto.periodo,
-          status: dto.status ?? 'PENDENTE',
+          status,
           createdBy,
         },
       });
@@ -66,11 +91,12 @@ export class ChamadasService {
 
   async update(id: number, dto: UpdateChamadaDto, updatedBy?: number) {
     await this.findOne(id);
+    const status = this.calcularStatusChamada(dto.associados)
     return this.prisma.$transaction(async (tx) => {
       const data: any = {
-        transporteId: dto.transporteId,
+        transporteId: dto.transporteId ?? undefined,
         periodo: dto.periodo,
-        status: dto.status,
+        status,
         updatedBy,
         updatedAt: new Date(),
       };

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBoletoDto } from './dto/create-boleto.dto';
+import { CreateBoletoLoteDto } from './dto/create-boleto-lote.dto';
 import { UpdateBoletoDto } from './dto/update-boleto.dto';
 
 @Injectable()
@@ -17,6 +18,22 @@ export class BoletosService {
         createdBy,
       },
     });
+  }
+
+  async createLote(dto: CreateBoletoLoteDto, createdBy?: number) {
+    return this.prisma.$transaction(
+      dto.associadosIds.map((associadoId) =>
+        this.prisma.boleto.create({
+          data: {
+            associadoId,
+            dataVencimento: new Date(dto.dataVencimento),
+            valor: dto.valor,
+            status: 'PENDENTE',
+            createdBy,
+          },
+        })
+      )
+    );
   }
 
   async findAll(status?: string) {

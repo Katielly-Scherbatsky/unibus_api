@@ -29,6 +29,11 @@ export class ChamadasController {
     return this.service.create(dto, user.usuarioId);
   }
 
+  @Get('verificar-data')
+  verificarData(@Query('data') data: string) {
+    return this.service.verificarChamadaPorData(data);
+  }
+
   @Get()
   findAll(@Query('status') status?: string) {
     return this.service.findAll(status);

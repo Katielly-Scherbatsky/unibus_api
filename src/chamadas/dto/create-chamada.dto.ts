@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class PresencaDto {
   @IsNumber()
@@ -24,8 +24,8 @@ export class PresencaDto {
 
 export class CreateChamadaDto {
   @IsNumber()
-  @IsNotEmpty()
-  transporteId!: number;
+  @IsOptional()
+  transporteId?: number;
 
   @IsString()
   @IsNotEmpty()
@@ -37,11 +37,11 @@ export class CreateChamadaDto {
 
   @IsString()
   @IsNotEmpty()
-  ida!: string;
+  sentidoViagem!: string;
 
   @IsString()
-  @IsNotEmpty()
-  status!: string;
+  @IsOptional()
+  status?: string;
 
   associados?: PresencaDto[];
 }

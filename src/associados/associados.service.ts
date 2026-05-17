@@ -54,6 +54,7 @@ export class AssociadosService {
     if (associacaoId) where.associacaoId = associacaoId;
     if (status) where.status = status;
     if (faculdade) where.faculdade = faculdade;
+    where.usuario = { tipo: 'ASSOCIADO' };
 
     const associados = await this.prisma.associado.findMany({
       where,
