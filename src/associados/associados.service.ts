@@ -18,7 +18,6 @@ export class AssociadosService {
           senha,
           tipo: 'ASSOCIADO',
           associacaoId,
-          primeiroAcesso: true,
         },
       });
 
@@ -32,6 +31,7 @@ export class AssociadosService {
           telefone: dto.telefone,
           status: 'ATIVO',
           poltrona: dto.poltrona ?? null,
+          primeiroAcesso: true,
           rua: dto.rua,
           bairro: dto.bairro,
           numero: dto.numero,

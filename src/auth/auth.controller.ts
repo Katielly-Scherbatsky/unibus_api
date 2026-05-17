@@ -22,8 +22,12 @@ export class AuthController {
       return { message: 'Credenciais inválidas' }
     }
 
-    if (usuario.primeiroAcesso) {
-      return { message: 'Primeiro acesso pendente. Por favor, acesse a tela de primeiro acesso para criar sua senha.', primeiroAcesso: true }
+    // Verificação de primeiro acesso apenas para ASSOCIADO
+    if (usuario.tipo === 'ASSOCIADO') {
+      const associado = await this.authService.buscarAssociadoPorUsuarioId(usuario.id)
+      if (associado?.primeiroAcesso) {
+        return { message: 'Primeiro acesso pendente. Por favor, acesse a tela de primeiro acesso para criar sua senha.', primeiroAcesso: true }
+      }
     }
 
     return this.authService.realizarLogin(usuario)

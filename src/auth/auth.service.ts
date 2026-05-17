@@ -11,6 +11,12 @@ import { MailService } from '../mail/mail.service';
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService, private mailService: MailService) {}
 
+  async buscarAssociadoPorUsuarioId(usuarioId: number) {
+    return this.prisma.associado.findUnique({
+      where: { usuarioId },
+    });
+  }
+
   async realizarLogin(usuario: any) {
     const payload = { email: usuario.email, id: usuario.id };
 
@@ -25,7 +31,7 @@ export class AuthService {
         email: usuario.email,
         tipo: usuario.tipo,
         associacaoId: usuario.associacaoId,
-        primeiroAcesso: usuario.primeiroAcesso,
+        primeiroAcesso: associado?.primeiroAcesso ?? false,
         status: associado?.status ?? null,
         nome: associado?.nome ?? usuario.email,
       }
@@ -157,6 +163,7 @@ export class AuthService {
           periodo: associado.periodo ?? 'N/A',
           matricula: associado.matricula ?? 'N/A',
           status: 'ATIVO',
+          primeiroAcesso: false,
         }
       });
 
@@ -330,17 +337,24 @@ export class AuthService {
       throw new BadRequestException('Este fluxo é exclusivo para associados.');
     }
 
-    if (!usuario.primeiroAcesso) {
+    if (!usuario.associado || !usuario.associado.primeiroAcesso) {
       throw new BadRequestException('Primeiro acesso já realizado. Utilize o login normal.');
     }
 
     const senhaHash = await bcrypt.hash(novaSenha, 10);
-    const atualizado = await this.prisma.usuario.update({
-      where: { id: usuario.id },
-      data: { senha: senhaHash, primeiroAcesso: false },
-    });
 
-    return this.realizarLogin(atualizado);
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({
+        where: { id: usuario.id },
+        data: { senha: senhaHash },
+      }),
+      this.prisma.associado.update({
+        where: { id: usuario.associado.id },
+        data: { primeiroAcesso: false },
+      }),
+    ]);
+
+    return this.realizarLogin(usuario);
   }
 
   async autoCadastroAssociado(dto: AutoCadastroAssociadoDto) {
@@ -365,7 +379,6 @@ export class AuthService {
           senha: senhaHash,
           tipo: 'ASSOCIADO',
           associacaoId: dto.associacaoId,
-          primeiroAcesso: false,
         },
       });
 
@@ -386,6 +399,7 @@ export class AuthService {
           curso: dto.curso,
           periodo: dto.periodo,
           matricula: dto.matricula,
+          primeiroAcesso: false,
         },
       });
 

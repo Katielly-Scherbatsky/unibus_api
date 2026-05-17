@@ -12,7 +12,6 @@ model Usuario {
   email          String  @unique
   senha          String
   tipo           String
-  primeiroAcesso Boolean @default(true)
 
   associacaoId Int?
   associacao   Associacao? @relation(fields: [associacaoId], references: [id])
@@ -67,6 +66,7 @@ model Associado {
   matricula       String
   status          String
   poltrona        Int?
+  primeiroAcesso  Boolean @default(true)
   rua             String
   bairro          String
   numero          String
