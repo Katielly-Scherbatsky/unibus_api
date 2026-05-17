@@ -4,6 +4,13 @@ CREATE TABLE `Usuario` (
     `email` VARCHAR(191) NOT NULL,
     `senha` VARCHAR(191) NOT NULL,
     `tipo` VARCHAR(191) NOT NULL,
+    `associacaoId` INTEGER NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Usuario_email_key`(`email`),
     PRIMARY KEY (`id`)
@@ -23,6 +30,12 @@ CREATE TABLE `Associacao` (
     `cep` VARCHAR(191) NOT NULL,
     `cidade` VARCHAR(191) NOT NULL,
     `estado` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -45,6 +58,12 @@ CREATE TABLE `Associado` (
     `numero` VARCHAR(191) NOT NULL,
     `cep` VARCHAR(191) NOT NULL,
     `cidade` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Associado_usuarioId_key`(`usuarioId`),
     PRIMARY KEY (`id`)
@@ -58,7 +77,13 @@ CREATE TABLE `Transporte` (
     `horarioIda` VARCHAR(191) NOT NULL,
     `horarioVolta` VARCHAR(191) NOT NULL,
     `dias` VARCHAR(191) NOT NULL,
-    `descricao` VARCHAR(191) NOT NULL,
+    `pontoPartida` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Transporte_associacaoId_key`(`associacaoId`),
     PRIMARY KEY (`id`)
@@ -71,6 +96,12 @@ CREATE TABLE `Chamada` (
     `data` DATETIME(3) NOT NULL,
     `periodo` VARCHAR(191) NOT NULL,
     `status` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Chamada_transporteId_key`(`transporteId`),
     PRIMARY KEY (`id`)
@@ -83,6 +114,12 @@ CREATE TABLE `PresencaChamada` (
     `associadoId` INTEGER NOT NULL,
     `presente` BOOLEAN NOT NULL,
     `poltrona` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `PresencaChamada_chamadaId_key`(`chamadaId`),
     UNIQUE INDEX `PresencaChamada_associadoId_key`(`associadoId`),
@@ -98,6 +135,12 @@ CREATE TABLE `Solicitacao` (
     `motivo` VARCHAR(191) NOT NULL,
     `status` VARCHAR(191) NOT NULL,
     `descricao` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Solicitacao_associadoId_key`(`associadoId`),
     PRIMARY KEY (`id`)
@@ -110,6 +153,12 @@ CREATE TABLE `Boleto` (
     `dataVencimento` DATETIME(3) NOT NULL,
     `valor` DOUBLE NOT NULL,
     `status` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Boleto_associadoId_key`(`associadoId`),
     PRIMARY KEY (`id`)
@@ -124,6 +173,12 @@ CREATE TABLE `Advertencia` (
     `motivo` VARCHAR(191) NOT NULL,
     `status` VARCHAR(191) NOT NULL,
     `descricao` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Advertencia_associadoId_key`(`associadoId`),
     PRIMARY KEY (`id`)
@@ -138,10 +193,19 @@ CREATE TABLE `Aviso` (
     `motivo` VARCHAR(191) NOT NULL,
     `status` VARCHAR(191) NOT NULL,
     `descricao` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `updatedBy` INTEGER NULL,
+    `deletedBy` INTEGER NULL,
+    `deletedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `Aviso_associadoId_key`(`associadoId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `Usuario` ADD CONSTRAINT `Usuario_associacaoId_fkey` FOREIGN KEY (`associacaoId`) REFERENCES `Associacao`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Associado` ADD CONSTRAINT `Associado_usuarioId_fkey` FOREIGN KEY (`usuarioId`) REFERENCES `Usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
