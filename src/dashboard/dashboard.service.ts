@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
-  async stats() {
+  async stats(associacaoId: number) {
     const [
       membrosTotais,
       chamadasPendentes,
@@ -14,12 +14,18 @@ export class DashboardService {
       advertenciasPendentes,
       cadastrosPendentes,
     ] = await Promise.all([
-      this.prisma.associado.count({ where: { deletedAt: null } }),
+      this.prisma.associado.count({
+        where: {
+          deletedAt: null,
+          associacaoId,
+          usuario: { tipo: 'ASSOCIADO' },
+        },
+      }),
       this.prisma.chamada.count({ where: { status: 'PENDENTE', deletedAt: null } }),
       this.prisma.boleto.count({ where: { status: 'PENDENTE', deletedAt: null } }),
       this.prisma.solicitacao.count({ where: { status: 'PENDENTE', deletedAt: null } }),
       this.prisma.advertencia.count({ where: { status: 'PENDENTE', deletedAt: null } }),
-      this.prisma.associado.count({ where: { status: 'PENDENTE', deletedAt: null } }),
+      this.prisma.associado.count({ where: { status: 'PENDENTE', deletedAt: null, associacaoId } }),
     ]);
 
     return {
