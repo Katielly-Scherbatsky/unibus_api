@@ -221,9 +221,14 @@ export class AuthService {
   async me(usuarioId: number) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: usuarioId },
-      select: { id: true, email: true, tipo: true, associacaoId: true },
+      include: { associado: true },
     });
-    return usuario;
+    if (!usuario) return null;
+    const { senha, associado, ...rest } = usuario;
+    return {
+      ...rest,
+      ...associado,
+    };
   }
 
   async resetarSenha(email: string, novaSenha: string) {
