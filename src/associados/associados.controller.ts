@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -15,6 +16,7 @@ import {
 import { AssociadosService } from './associados.service';
 import { CreateAssociadoDto } from './dto/create-associado.dto';
 import { UpdateAssociadoDto } from './dto/update-associado.dto';
+import { UpdateAssociadoStatusDto } from './dto/update-associado-status.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -49,6 +51,15 @@ export class AssociadosController {
     @CurrentUser() user: any,
   ) {
     return this.service.update(id, dto, user.usuarioId);
+  }
+
+  @Patch(':id/status')
+  atualizarStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAssociadoStatusDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.service.atualizarStatus(id, dto.status, user.usuarioId);
   }
 
   @Delete(':id')

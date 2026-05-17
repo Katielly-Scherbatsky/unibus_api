@@ -122,6 +122,18 @@ export class AssociadosService {
     return updated;
   }
 
+  async atualizarStatus(id: number, status: string, updatedBy?: number) {
+    const associado = await this.prisma.associado.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!associado) throw new NotFoundException('Associado não encontrado');
+
+    return this.prisma.associado.update({
+      where: { id },
+      data: { status, updatedBy, updatedAt: new Date() },
+    });
+  }
+
   async remove(id: number, deletedBy?: number) {
     const associado = await this.prisma.associado.findFirst({
       where: { id, deletedAt: null },

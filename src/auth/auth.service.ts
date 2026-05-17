@@ -13,6 +13,10 @@ export class AuthService {
   async realizarLogin(usuario: any) {
     const payload = { email: usuario.email, id: usuario.id };
 
+    const associado = await this.prisma.associado.findUnique({
+      where: { usuarioId: usuario.id },
+    });
+
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -21,6 +25,8 @@ export class AuthService {
         tipo: usuario.tipo,
         associacaoId: usuario.associacaoId,
         primeiroAcesso: usuario.primeiroAcesso,
+        status: associado?.status ?? null,
+        nome: associado?.nome ?? usuario.email,
       }
     };
   }
@@ -306,7 +312,7 @@ export class AuthService {
           nome: dto.nome,
           cpf: dto.cpf,
           telefone: dto.telefone,
-          status: 'ATIVO',
+          status: 'PENDENTE',
           rua: dto.rua,
           bairro: dto.bairro,
           numero: dto.numero,
