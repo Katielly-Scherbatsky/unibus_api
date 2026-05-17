@@ -41,7 +41,7 @@ export class AssociacoesController {
   @Put(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateAssociacaoDto,
+    @Body() dto: any,
     @CurrentUser() user: any,
   ) {
     return this.service.update(id, dto, user.usuarioId);
