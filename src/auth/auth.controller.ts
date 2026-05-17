@@ -2,6 +2,8 @@ import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards } from '@n
 import { AuthService } from './auth.service'
 import { RegisterDto } from './dto/register.dto'
 import { AutoCadastroAssociadoDto } from './dto/auto-cadastro-associado.dto'
+import { EsqueciSenhaDto } from './dto/esqueci-senha.dto'
+import { RedefinirSenhaDto } from './dto/redefinir-senha.dto'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 
@@ -39,6 +41,17 @@ export class AuthController {
     return this.authService.me(user.usuarioId)
   }
 
+  @Post('esqueci-senha')
+  async esqueciSenha(@Body() body: EsqueciSenhaDto) {
+    return this.authService.esqueciSenha(body.email);
+  }
+
+  @Post('redefinir-senha')
+  async redefinirSenha(@Body() body: RedefinirSenhaDto) {
+    return this.authService.redefinirSenha(body.token, body.novaSenha);
+  }
+
+  // Endpoints legados (mantidos para compatibilidade)
   @Post('recover')
   async recover(@Body('email') email: string) {
     return { message: 'Se o email existir, um código de recuperação será enviado.', email };

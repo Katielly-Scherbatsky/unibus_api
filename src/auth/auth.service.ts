@@ -1,14 +1,15 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { AutoCadastroAssociadoDto } from './dto/auto-cadastro-associado.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegistrarAdminDto } from './dto/registrar-admin.dto';
 import { RegisterDto } from './dto/register.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(private prisma: PrismaService, private jwtService: JwtService, private mailService: MailService) {}
 
   async realizarLogin(usuario: any) {
     const payload = { email: usuario.email, id: usuario.id };
@@ -237,6 +238,69 @@ export class AuthService {
       ...rest,
       ...associado,
     };
+  }
+
+  async esqueciSenha(email: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+
+    if (usuario) {
+      const token = this.jwtService.sign(
+        { sub: usuario.id, type: 'password-reset' },
+        { expiresIn: '1h' }
+      );
+
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const link = `${frontendUrl}/redefinir-senha?token=${token}`;
+
+      await this.mailService.sendMail(
+        email,
+        'Recuperação de Senha - UniBus',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #033d3d;">Recuperação de Senha</h2>
+            <p>Olá, ${usuario.email}!</p>
+            <p>Recebemos uma solicitação para redefinir a senha da sua conta no UniBus.</p>
+            <p>Clique no botão abaixo para criar uma nova senha. O link expira em 1 hora.</p>
+            <a href="${link}" style="display: inline-block; background: #033d3d; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 16px 0;">Redefinir Senha</a>
+            <p>Se você não solicitou a redefinição, ignore este e-mail.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+            <p style="font-size: 12px; color: #888;">UniBus - Gestão Inteligente do Transporte Acadêmico</p>
+          </div>
+        `
+      );
+    }
+
+    return { message: 'Se o e-mail estiver cadastrado, você receberá um link de recuperação em instantes.' };
+  }
+
+  async redefinirSenha(token: string, novaSenha: string) {
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: 'segredo_super_secreto',
+      });
+
+      if (payload.type !== 'password-reset') {
+        throw new UnauthorizedException('Token inválido.');
+      }
+
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!usuario) {
+        throw new UnauthorizedException('Usuário não encontrado.');
+      }
+
+      const senhaHash = await bcrypt.hash(novaSenha, 10);
+      await this.prisma.usuario.update({
+        where: { id: usuario.id },
+        data: { senha: senhaHash },
+      });
+
+      return { message: 'Senha redefinida com sucesso.' };
+    } catch {
+      throw new UnauthorizedException('Token inválido ou expirado.');
+    }
   }
 
   async resetarSenha(email: string, novaSenha: string) {

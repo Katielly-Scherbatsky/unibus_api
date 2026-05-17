@@ -5,11 +5,13 @@ import { AuthService } from './auth.service'
 import { AuthController } from './auth.controller'
 import { JwtStrategy } from './jwt.strategy'
 import { PrismaModule } from '../prisma/prisma.module'
+import { MailModule } from '../mail/mail.module'
 
 @Module({
   imports: [
     PassportModule,
     PrismaModule,
+    MailModule,
     JwtModule.register({
       secret: 'segredo_super_secreto',
       signOptions: { expiresIn: '1d' }
