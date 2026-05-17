@@ -56,6 +56,7 @@ model Associado {
   id              Int    @id @default(autoincrement())
   usuarioId       Int @unique
   associacaoId    Int
+  transporteId    Int?
   nome            String
   cpf             String
   telefone        String
@@ -64,6 +65,7 @@ model Associado {
   periodo         String
   matricula       String
   status          String
+  poltrona        Int?
   rua             String
   bairro          String
   numero          String
@@ -72,6 +74,7 @@ model Associado {
 
   usuario     Usuario   @relation(fields: [usuarioId], references: [id])
   associacao  Associacao @relation(fields: [associacaoId], references: [id])
+  transporte  Transporte? @relation(fields: [transporteId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,6 +107,7 @@ model Transporte {
   deletedAt DateTime?
 
   associacao Associacao @relation(fields: [associacaoId], references: [id])
+  associados Associado[]
   chamadas   Chamada[]
 }
 
