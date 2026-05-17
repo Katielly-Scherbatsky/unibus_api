@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { AutoCadastroAssociadoDto } from './dto/auto-cadastro-associado.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -270,5 +271,61 @@ export class AuthService {
     });
 
     return this.realizarLogin(atualizado);
+  }
+
+  async autoCadastroAssociado(dto: AutoCadastroAssociadoDto) {
+    this.validarEmail(dto.email);
+    this.validarCpf(dto.cpf);
+
+    const emailExiste = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
+    if (emailExiste) throw new BadRequestException('E-mail já cadastrado');
+
+    const cpfExiste = await this.prisma.associado.findFirst({ where: { cpf: dto.cpf } });
+    if (cpfExiste) throw new BadRequestException('CPF já cadastrado');
+
+    const associacaoExiste = await this.prisma.associacao.findUnique({ where: { id: dto.associacaoId } });
+    if (!associacaoExiste) throw new BadRequestException('Associação não encontrada');
+
+    const senhaHash = await bcrypt.hash(dto.senha, 10);
+
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.usuario.create({
+        data: {
+          email: dto.email,
+          senha: senhaHash,
+          tipo: 'ASSOCIADO',
+          associacaoId: dto.associacaoId,
+          primeiroAcesso: false,
+        },
+      });
+
+      const associado = await tx.associado.create({
+        data: {
+          usuarioId: user.id,
+          associacaoId: dto.associacaoId,
+          nome: dto.nome,
+          cpf: dto.cpf,
+          telefone: dto.telefone,
+          status: 'ATIVO',
+          rua: dto.rua,
+          bairro: dto.bairro,
+          numero: dto.numero,
+          cep: dto.cep,
+          cidade: dto.cidade,
+          faculdade: dto.faculdade,
+          curso: dto.curso,
+          periodo: dto.periodo,
+          matricula: dto.matricula,
+        },
+      });
+
+      delete (user as any).senha;
+
+      const login = await this.realizarLogin(user);
+      return {
+        ...login,
+        associado,
+      };
+    });
   }
 }

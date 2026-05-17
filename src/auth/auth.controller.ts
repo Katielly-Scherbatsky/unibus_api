@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { RegisterDto } from './dto/register.dto'
+import { AutoCadastroAssociadoDto } from './dto/auto-cadastro-associado.dto'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 
@@ -56,5 +57,11 @@ export class AuthController {
   @Post('primeiro-acesso')
   async primeiroAcesso(@Body() body: { email: string; novaSenha: string }) {
     return this.authService.primeiroAcesso(body.email, body.novaSenha);
+  }
+
+  @Post('auto-cadastro-associado')
+  @HttpCode(HttpStatus.CREATED)
+  async autoCadastroAssociado(@Body() body: AutoCadastroAssociadoDto) {
+    return this.authService.autoCadastroAssociado(body);
   }
 }
