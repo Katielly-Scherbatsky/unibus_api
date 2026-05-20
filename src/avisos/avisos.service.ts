@@ -27,7 +27,16 @@ export class AvisosService {
     if (status) where.status = status;
     return this.prisma.aviso.findMany({
       where,
-      include: { associado: { select: { nome: true } } },
+      select: {
+        id: true,
+        associadoId: true,
+        data: true,
+        tipo: true,
+        motivo: true,
+        status: true,
+        descricao: true,
+        associado: { select: { nome: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -49,7 +58,6 @@ export class AvisosService {
       motivo: dto.motivo,
       status: dto.status,
       descricao: dto.descricao,
-      feitoPor: dto.feitoPor,
       updatedBy,
       updatedAt: new Date(),
     };

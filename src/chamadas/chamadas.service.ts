@@ -67,9 +67,19 @@ export class ChamadasService {
     if (status) where.status = status;
     return this.prisma.chamada.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        data: true,
+        periodo: true,
+        status: true,
+        transporteId: true,
         presencas: {
-          include: { associado: { select: { nome: true, faculdade: true } } },
+          select: {
+            id: true,
+            presente: true,
+            poltrona: true,
+            associado: { select: { nome: true, faculdade: true } },
+          },
         },
       },
       orderBy: { createdAt: 'desc' },

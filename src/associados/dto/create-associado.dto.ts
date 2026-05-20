@@ -69,9 +69,9 @@ export class CreateAssociadoDto {
   @IsOptional()
   transporteId?: number;
 
-  @IsInt()
+  @IsString()
   @IsOptional()
-  poltrona?: number;
+  poltrona?: string;
 
   @IsString()
   @IsOptional()

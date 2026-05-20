@@ -58,7 +58,15 @@ export class AssociadosService {
 
     const associados = await this.prisma.associado.findMany({
       where,
-      include: { usuario: { select: { email: true, tipo: true } } },
+      select: {
+        id: true,
+        nome: true,
+        faculdade: true,
+        status: true,
+        usuarioId: true,
+        createdBy: true,
+        usuario: { select: { email: true, tipo: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -82,7 +90,7 @@ export class AssociadosService {
   async update(id: number, dto: UpdateAssociadoDto, updatedBy?: number) {
     const associado = await this.prisma.associado.findFirst({
       where: { id, deletedAt: null },
-      include: { usuario: true },
+      select: { id: true, usuarioId: true, usuario: { select: { tipo: true } } },
     });
     if (!associado) throw new NotFoundException('Associado não encontrado');
 
@@ -138,7 +146,7 @@ export class AssociadosService {
   async remove(id: number, deletedBy?: number) {
     const associado = await this.prisma.associado.findFirst({
       where: { id, deletedAt: null },
-      include: { usuario: true },
+      select: { id: true, usuarioId: true, usuario: { select: { tipo: true } } },
     });
     if (!associado) throw new NotFoundException('Associado não encontrado');
     if (associado.usuario?.tipo === 'ADMIN') {

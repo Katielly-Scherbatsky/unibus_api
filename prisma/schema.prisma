@@ -65,7 +65,7 @@ model Associado {
   periodo         String
   matricula       String
   status          String
-  poltrona        Int?
+  poltrona        String?
   primeiroAcesso  Boolean @default(true)
   rua             String
   bairro          String

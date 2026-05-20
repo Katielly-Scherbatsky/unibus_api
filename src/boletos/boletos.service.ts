@@ -41,7 +41,14 @@ export class BoletosService {
     if (status) where.status = status;
     return this.prisma.boleto.findMany({
       where,
-      include: { associado: { select: { nome: true } } },
+      select: {
+        id: true,
+        associadoId: true,
+        dataVencimento: true,
+        valor: true,
+        status: true,
+        associado: { select: { nome: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -59,7 +66,6 @@ export class BoletosService {
     await this.findOne(id);
     const data: any = {
       associadoId: dto.associadoId,
-      periodo: dto.periodo,
       valor: dto.valor,
       status: dto.status,
       updatedBy,
