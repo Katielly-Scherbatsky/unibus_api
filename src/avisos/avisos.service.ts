@@ -87,19 +87,40 @@ export class AvisosService {
   async findOne(id: number) {
     const aviso = await this.prisma.aviso.findFirst({
       where: { id, deletedAt: null },
-      include: {
+      select: {
+        id: true,
+        data: true,
+        tipo: true,
+        motivo: true,
+        status: true,
+        descricao: true,
+        feitoPor: true,
+        createdAt: true,
         avisoUsuarios: {
-          include: {
-            associado: { select: { id: true, nome: true } },
+          select: {
+            id: true,
+            lido: true,
+            associado: {
+              select: {
+                id: true,
+                nome: true,
+                matricula: true,
+                curso: true,
+              },
+            },
           },
-          orderBy: { associado: { nome: 'asc' } },
+          orderBy: {
+            associado: {
+              nome: 'asc',
+            },
+          },
         },
       },
     });
     if (!aviso) throw new NotFoundException('Aviso não encontrado');
 
     const total = aviso.avisoUsuarios.length;
-    const lidos = aviso.avisoUsuarios.filter((u) => u.lido).length;
+    const lidos = aviso.avisoUsuarios.filter((u: any) => u.lido).length;
     const percentual = total > 0 ? Math.round((lidos / total) * 100) : 0;
 
     return {
@@ -137,6 +158,12 @@ export class AvisosService {
   }
 
   async remove(id: number, deletedBy?: number) {
+    const aviso = await this.findOne(id);
+    if (aviso.status !== 'PENDENTE') {
+      throw new BadRequestException(
+        'Apenas avisos com status PENDENTE podem ser excluídos.',
+      );
+    }
     try {
       return await this.prisma.aviso.update({
         where: { id, deletedAt: null },
