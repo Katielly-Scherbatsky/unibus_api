@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateAssociadoDto {
   @IsString()
@@ -71,10 +72,12 @@ export class CreateAssociadoDto {
   @IsOptional()
   diasTransporte?: string;
 
+  @Type(() => Number)
   @IsInt()
   @IsOptional()
   transporteId?: number;
 
+  @Type(() => Number)
   @IsInt()
   @IsOptional()
   poltrona?: number;

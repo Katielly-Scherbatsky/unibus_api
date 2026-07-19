@@ -64,7 +64,10 @@ export class TransportesController {
 
   @Public()
   @Get(':id/poltronas-ocupadas')
-  findPoltronasOcupadas(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findPoltronasOcupadas(id);
+  findPoltronasOcupadas(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('dias') dias?: string,
+  ) {
+    return this.service.findPoltronasOcupadas(id, dias);
   }
 }

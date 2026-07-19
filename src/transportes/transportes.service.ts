@@ -67,15 +67,31 @@ export class TransportesService {
     });
   }
 
-  async findPoltronasOcupadas(id: number) {
+  async findPoltronasOcupadas(id: number, dias?: string) {
+    const where: any = {
+      transporteId: id,
+      status: 'ATIVO',
+      deletedAt: null,
+      poltrona: { not: null },
+    };
+
     const associados = await this.prisma.associado.findMany({
-      where: {
-        transporteId: id,
-        deletedAt: null,
-        poltrona: { not: null },
-      },
-      select: { poltrona: true },
+      where,
+      select: { poltrona: true, diasTransporte: true },
     });
+
+    if (dias) {
+      const diasArray = dias.split(',').map((d) => d.trim()).filter(Boolean);
+      return associados
+        .filter((a) => {
+          if (!a.diasTransporte) return false;
+          const aDias = a.diasTransporte.split(',').map((d) => d.trim());
+          return aDias.some((d) => diasArray.includes(d));
+        })
+        .map((a) => a.poltrona)
+        .filter((p): p is number => p !== null);
+    }
+
     return associados
       .map((a) => a.poltrona)
       .filter((p): p is number => p !== null);
