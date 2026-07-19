@@ -473,6 +473,12 @@ export class ChamadasService {
   }
 
   async remove(id: number, deletedBy?: number) {
+    const chamada = await this.findOne(id);
+    if (chamada.status === 'FINALIZADO' || chamada.status === 'FINALIZADA') {
+      throw new BadRequestException(
+        'Apenas chamadas com status PENDENTE podem ser excluídas.',
+      );
+    }
     try {
       return await this.prisma.$transaction(async (tx) => {
         await tx.presencaChamada.updateMany({
