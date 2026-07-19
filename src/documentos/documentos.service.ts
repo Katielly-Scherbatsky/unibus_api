@@ -1,45 +1,95 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface Documento {
-  id: number;
-  nome: string;
-  tipo: 'DOCUMENTO' | 'NORMA';
-  url: string;
-  createdAt: string;
-}
-
-const DB_PATH = path.join(process.cwd(), 'documentos.json');
-
-function readDb(): Documento[] {
-  if (!fs.existsSync(DB_PATH)) return [];
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
-}
-
-function writeDb(docs: Documento[]) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(docs, null, 2));
-}
-
 @Injectable()
 export class DocumentosService {
-  findAll(tipo?: string) {
-    const docs = readDb();
-    if (tipo) return docs.filter((d) => d.tipo === tipo);
-    return docs;
+  constructor(private prisma: PrismaService) {}
+
+  async findAll(
+    associacaoId: number,
+    associadoId?: number,
+    page = 1,
+    limit = 20,
+  ) {
+    const where: any = {};
+    if (associacaoId) where.associado = { associacaoId };
+    if (associadoId) where.associadoId = associadoId;
+
+    const todos = Number(limit) === -1;
+    const take = todos
+      ? undefined
+      : Math.min(Math.max(Number(limit) || 20, 1), 100);
+    const skip = todos
+      ? undefined
+      : (Math.max(Number(page) || 1, 1) - 1) * (take || 0);
+
+    const [data, total] = await Promise.all([
+      this.prisma.documento.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip,
+      }),
+      this.prisma.documento.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit: todos ? -1 : take,
+      totalPages: todos ? 1 : Math.ceil(total / (take || 1)),
+    };
   }
 
-  create(nome: string, tipo: 'DOCUMENTO' | 'NORMA', url: string) {
-    const docs = readDb();
-    const doc: Documento = {
-      id: docs.length > 0 ? Math.max(...docs.map((d) => d.id)) + 1 : 1,
-      nome,
-      tipo,
-      url,
-      createdAt: new Date().toISOString(),
-    };
-    docs.push(doc);
-    writeDb(docs);
-    return doc;
+  async createMany(
+    files: Express.Multer.File[],
+    associadoId: number,
+    titulo?: string,
+  ) {
+    if (!files || files.length === 0) return [];
+    const tituloBase = titulo?.trim();
+    await this.prisma.documento.createMany({
+      data: files.map((file, index) => ({
+        nome: tituloBase && index === 0 ? tituloBase : file.originalname,
+        url: `/public/uploads/documentos/${file.filename}`,
+        tipo: file.mimetype,
+        associadoId,
+      })),
+      skipDuplicates: true,
+    });
+    return this.prisma.documento.findMany({
+      where: { associadoId },
+      orderBy: { createdAt: 'desc' },
+      take: files.length,
+    });
+  }
+
+  async remove(id: number, associacaoId: number) {
+    try {
+      const doc = await this.prisma.documento.delete({
+        where: {
+          id,
+          associado: { associacaoId },
+        },
+      });
+
+      const filePath = path.join(
+        process.cwd(),
+        doc.url.replace('/public/', 'public/'),
+      );
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      return { message: 'Documento removido com sucesso' };
+    } catch (error: any) {
+      if (error?.code === 'P2025') {
+        throw new NotFoundException('Documento não encontrado');
+      }
+      throw error;
+    }
   }
 }

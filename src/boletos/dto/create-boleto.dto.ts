@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateBoletoDto {
   @IsNumber()
@@ -9,15 +9,12 @@ export class CreateBoletoDto {
   @IsNotEmpty()
   dataVencimento!: string;
 
-  @IsString()
-  @IsNotEmpty()
-  periodo!: string;
-
   @IsNumber()
   @IsNotEmpty()
   valor!: number;
 
   @IsString()
   @IsNotEmpty()
+  @IsIn(['PAGO', 'PENDENTE'])
   status!: string;
 }

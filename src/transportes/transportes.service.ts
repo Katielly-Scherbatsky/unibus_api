@@ -10,6 +10,16 @@ export class TransportesService {
   async create(dto: CreateTransporteDto, createdBy?: number) {
     return this.prisma.transporte.create({
       data: { ...dto, createdBy },
+      select: {
+        id: true,
+        associacaoId: true,
+        poltronas: true,
+        horarioIda: true,
+        horarioVolta: true,
+        dias: true,
+        pontoPartida: true,
+        createdAt: true,
+      },
     });
   }
 
@@ -35,6 +45,16 @@ export class TransportesService {
     return this.prisma.transporte.update({
       where: { id },
       data: { ...dto, updatedBy, updatedAt: new Date() },
+      select: {
+        id: true,
+        associacaoId: true,
+        poltronas: true,
+        horarioIda: true,
+        horarioVolta: true,
+        dias: true,
+        pontoPartida: true,
+        updatedAt: true,
+      },
     });
   }
 
@@ -43,6 +63,21 @@ export class TransportesService {
     return this.prisma.transporte.update({
       where: { id },
       data: { deletedAt: new Date(), deletedBy },
+      select: { id: true, deletedAt: true },
     });
+  }
+
+  async findPoltronasOcupadas(id: number) {
+    const associados = await this.prisma.associado.findMany({
+      where: {
+        transporteId: id,
+        deletedAt: null,
+        poltrona: { not: null },
+      },
+      select: { poltrona: true },
+    });
+    return associados
+      .map((a) => a.poltrona)
+      .filter((p): p is number => p !== null);
   }
 }

@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { AutoCadastroAssociadoDto } from './dto/auto-cadastro-associado.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -6,10 +12,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegistrarAdminDto } from './dto/registrar-admin.dto';
 import { RegisterDto } from './dto/register.dto';
 import { MailService } from '../mail/mail.service';
+import { RedefinirSenhaCodigoDto } from './dto/redefinir-senha-codigo.dto';
+import { AtualizarPerfilDto } from './dto/atualizar-perfil.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService, private mailService: MailService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private mailService: MailService,
+  ) {}
 
   async buscarAssociadoPorUsuarioId(usuarioId: number) {
     return this.prisma.associado.findUnique({
@@ -31,16 +43,18 @@ export class AuthService {
         email: usuario.email,
         tipo: usuario.tipo,
         associacaoId: usuario.associacaoId,
+        associadoId: associado?.id ?? null,
         primeiroAcesso: associado?.primeiroAcesso ?? false,
         status: associado?.status ?? null,
         nome: associado?.nome ?? usuario.email,
-      }
+        avatarUrl: usuario.avatarUrl ?? null,
+      },
     };
   }
 
   async validarUsuario(email: string, senha: string) {
     const usuario = await this.prisma.usuario.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (!usuario) return null;
@@ -59,24 +73,30 @@ export class AuthService {
 
   private validarCpf(cpf: string) {
     const nums = cpf.replace(/\D/g, '');
-    if (nums.length !== 11) throw new BadRequestException('CPF deve ter 11 dígitos');
-    if (/^(\d)\1{10}$/.test(nums)) throw new BadRequestException('CPF inválido');
+    if (nums.length !== 11)
+      throw new BadRequestException('CPF deve ter 11 dígitos');
+    if (/^(\d)\1{10}$/.test(nums))
+      throw new BadRequestException('CPF inválido');
     let soma = 0;
     for (let i = 0; i < 9; i++) soma += parseInt(nums.charAt(i)) * (10 - i);
     let resto = 11 - (soma % 11);
     if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(nums.charAt(9))) throw new BadRequestException('CPF inválido');
+    if (resto !== parseInt(nums.charAt(9)))
+      throw new BadRequestException('CPF inválido');
     soma = 0;
     for (let i = 0; i < 10; i++) soma += parseInt(nums.charAt(i)) * (11 - i);
     resto = 11 - (soma % 11);
     if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(nums.charAt(10))) throw new BadRequestException('CPF inválido');
+    if (resto !== parseInt(nums.charAt(10)))
+      throw new BadRequestException('CPF inválido');
   }
 
   private validarCnpj(cnpj: string) {
     const nums = cnpj.replace(/\D/g, '');
-    if (nums.length !== 14) throw new BadRequestException('CNPJ deve ter 14 dígitos');
-    if (/^(\d)\1{13}$/.test(nums)) throw new BadRequestException('CNPJ inválido');
+    if (nums.length !== 14)
+      throw new BadRequestException('CNPJ deve ter 14 dígitos');
+    if (/^(\d)\1{13}$/.test(nums))
+      throw new BadRequestException('CNPJ inválido');
     const calc = (x: number) => {
       const n = nums.substring(0, x);
       let y = x - 7;
@@ -88,7 +108,10 @@ export class AuthService {
       const r = 11 - (s % 11);
       return r > 9 ? 0 : r;
     };
-    if (calc(12) !== parseInt(nums.charAt(12)) || calc(13) !== parseInt(nums.charAt(13))) {
+    if (
+      calc(12) !== parseInt(nums.charAt(12)) ||
+      calc(13) !== parseInt(nums.charAt(13))
+    ) {
       throw new BadRequestException('CNPJ inválido');
     }
   }
@@ -109,13 +132,13 @@ export class AuthService {
     this.validarHorario(transporte.horarioIda);
     this.validarHorario(transporte.horarioVolta);
 
-    const emailExiste = await this.prisma.usuario.findUnique({ where: { email: usuario.email } });
+    const [emailExiste, cpfExiste, cnpjExiste] = await Promise.all([
+      this.prisma.usuario.findUnique({ where: { email: usuario.email } }),
+      this.prisma.associado.findFirst({ where: { cpf: associado.cpf } }),
+      this.prisma.associacao.findFirst({ where: { cnpj: associacao.cnpj } }),
+    ]);
     if (emailExiste) throw new BadRequestException('E-mail já cadastrado');
-
-    const cpfExiste = await this.prisma.associado.findFirst({ where: { cpf: associado.cpf } });
     if (cpfExiste) throw new BadRequestException('CPF já cadastrado');
-
-    const cnpjExiste = await this.prisma.associacao.findFirst({ where: { cnpj: associacao.cnpj } });
     if (cnpjExiste) throw new BadRequestException('CNPJ já cadastrado');
 
     const senhaHash = await bcrypt.hash(usuario.senha, 10);
@@ -133,8 +156,8 @@ export class AuthService {
           numero: associacao.numero,
           cep: associacao.cep,
           cidade: associacao.cidade,
-          estado: associacao.estado
-        }
+          estado: associacao.estado,
+        },
       });
 
       const user = await tx.usuario.create({
@@ -142,8 +165,8 @@ export class AuthService {
           email: usuario.email,
           senha: senhaHash,
           tipo: 'ADMIN',
-          associacaoId: assoc.id
-        }
+          associacaoId: assoc.id,
+        },
       });
 
       const associadoCriado = await tx.associado.create({
@@ -158,13 +181,21 @@ export class AuthService {
           numero: associado.numero,
           cep: associado.cep,
           cidade: associado.cidade,
+          estado: associado.estado ?? null,
           faculdade: associado.faculdade ?? 'N/A',
           curso: associado.curso ?? 'N/A',
           periodo: associado.periodo ?? 'N/A',
           matricula: associado.matricula ?? 'N/A',
           status: 'ATIVO',
           primeiroAcesso: false,
-        }
+        },
+        select: {
+          id: true,
+          nome: true,
+          cpf: true,
+          status: true,
+          associacaoId: true,
+        },
       });
 
       const transp = await tx.transporte.create({
@@ -174,17 +205,28 @@ export class AuthService {
           horarioIda: transporte.horarioIda,
           horarioVolta: transporte.horarioVolta,
           dias: transporte.dias,
-          pontoPartida: transporte.pontoPartida
-        }
+          pontoPartida: transporte.pontoPartida,
+        },
+        select: {
+          id: true,
+          associacaoId: true,
+          poltronas: true,
+          pontoPartida: true,
+        },
       });
 
       delete (user as any).senha;
 
       return {
-        user,
-        assoc,
+        user: {
+          id: user.id,
+          email: user.email,
+          tipo: user.tipo,
+          associacaoId: user.associacaoId,
+        },
+        assoc: { id: assoc.id, nome: assoc.nome },
         transp,
-        associado: associadoCriado
+        associado: associadoCriado,
       };
     });
   }
@@ -204,6 +246,7 @@ export class AuthService {
         numero: dto.numero,
         cep: dto.cep,
         cidade: dto.cidade,
+        estado: dto.estado,
         faculdade: dto.faculdade,
         curso: dto.curso,
         periodo: dto.periodo,
@@ -237,14 +280,113 @@ export class AuthService {
   async me(usuarioId: number) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: usuarioId },
-      include: { associado: true },
+      select: {
+        id: true,
+        email: true,
+        tipo: true,
+        associacaoId: true,
+        avatarUrl: true,
+        associado: {
+          select: {
+            id: true,
+            nome: true,
+            cpf: true,
+            telefone: true,
+            rua: true,
+            bairro: true,
+            numero: true,
+            cep: true,
+            cidade: true,
+            estado: true,
+            status: true,
+            primeiroAcesso: true,
+          },
+        },
+      },
     });
     if (!usuario) return null;
-    const { senha, associado, ...rest } = usuario;
     return {
-      ...rest,
-      ...associado,
+      id: usuario.id,
+      email: usuario.email,
+      tipo: usuario.tipo,
+      associacaoId: usuario.associacaoId,
+      avatarUrl: usuario.avatarUrl,
+      associadoId: usuario.associado?.id ?? null,
+      ...usuario.associado,
     };
+  }
+
+  async atualizarMe(usuarioId: number, dto: AtualizarPerfilDto) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+      include: { associado: true },
+    });
+    if (!usuario) throw new BadRequestException('Usuário não encontrado');
+
+    if (dto.email && dto.email !== usuario.email) {
+      this.validarEmail(dto.email);
+      const emailExiste = await this.prisma.usuario.findUnique({
+        where: { email: dto.email },
+      });
+      if (emailExiste) throw new BadRequestException('E-mail já cadastrado');
+      await this.prisma.usuario.update({
+        where: { id: usuarioId },
+        data: { email: dto.email },
+      });
+    }
+
+    if (usuario.associado) {
+      const data: any = {
+        nome: dto.nome,
+        cpf: dto.cpf,
+        telefone: dto.telefone,
+        rua: dto.rua,
+        bairro: dto.bairro,
+        numero: dto.numero,
+        cep: dto.cep,
+        cidade: dto.cidade,
+        estado: dto.estado,
+      };
+      Object.keys(data).forEach(
+        (key) => data[key] === undefined && delete data[key],
+      );
+
+      if (Object.keys(data).length > 0) {
+        await this.prisma.associado.update({
+          where: { id: usuario.associado.id },
+          data,
+        });
+      }
+    }
+
+    return this.me(usuarioId);
+  }
+
+  async atualizarAvatar(usuarioId: number, file: Express.Multer.File) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+    });
+    if (!usuario) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    if (usuario.avatarUrl) {
+      const oldPath = path.join(
+        process.cwd(),
+        usuario.avatarUrl.replace('/public/', 'public/'),
+      );
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    const avatarUrl = `/public/uploads/avatars/${file.filename}`;
+    await this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { avatarUrl },
+    });
+
+    return { avatarUrl };
   }
 
   async esqueciSenha(email: string) {
@@ -253,7 +395,7 @@ export class AuthService {
     if (usuario) {
       const token = this.jwtService.sign(
         { sub: usuario.id, type: 'password-reset' },
-        { expiresIn: '1h' }
+        { expiresIn: '1h' },
       );
 
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -273,11 +415,14 @@ export class AuthService {
             <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
             <p style="font-size: 12px; color: #888;">UniBus - Gestão Inteligente do Transporte Acadêmico</p>
           </div>
-        `
+        `,
       );
     }
 
-    return { message: 'Se o e-mail estiver cadastrado, você receberá um link de recuperação em instantes.' };
+    return {
+      message:
+        'Se o e-mail estiver cadastrado, você receberá um link de recuperação em instantes.',
+    };
   }
 
   async redefinirSenha(token: string, novaSenha: string) {
@@ -310,6 +455,112 @@ export class AuthService {
     }
   }
 
+  private gerarCodigoRecuperacao(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async solicitarRecuperacaoCodigo(email: string) {
+    this.validarEmail(email);
+
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+
+    if (usuario) {
+      const codigo = this.gerarCodigoRecuperacao();
+      const expiraEm = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+      await this.prisma.passwordReset.create({
+        data: {
+          email,
+          codigo,
+          expiraEm,
+        },
+      });
+
+      await this.mailService.sendMail(
+        email,
+        'Código de Recuperação de Senha - UniBus',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #033d3d;">Recuperação de Senha</h2>
+            <p>Olá, ${usuario.email}!</p>
+            <p>Recebemos uma solicitação para redefinir a senha da sua conta no UniBus.</p>
+            <p>Utilize o código abaixo para prosseguir com a recuperação. Ele expira em 15 minutos.</p>
+            <div style="background: #f4f4f4; padding: 16px; border-radius: 8px; text-align: center; margin: 16px 0;">
+              <span style="font-size: 28px; font-weight: 700; color: #033d3d; letter-spacing: 4px;">${codigo}</span>
+            </div>
+            <p>Se você não solicitou a redefinição, ignore este e-mail.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+            <p style="font-size: 12px; color: #888;">UniBus - Gestão Inteligente do Transporte Acadêmico</p>
+          </div>
+        `,
+      );
+    }
+
+    return {
+      message:
+        'Se o e-mail estiver cadastrado, você receberá um código de recuperação em instantes.',
+    };
+  }
+
+  async validarCodigoRecuperacao(email: string, codigo: string) {
+    this.validarEmail(email);
+
+    const registro = await this.prisma.passwordReset.findFirst({
+      where: {
+        email,
+        codigo,
+        usado: false,
+        expiraEm: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!registro) {
+      throw new BadRequestException('Código inválido ou expirado.');
+    }
+
+    return { valido: true, message: 'Código verificado com sucesso.' };
+  }
+
+  async redefinirSenhaPorCodigo(dto: RedefinirSenhaCodigoDto) {
+    const { email, codigo, novaSenha } = dto;
+    this.validarEmail(email);
+
+    const registro = await this.prisma.passwordReset.findFirst({
+      where: {
+        email,
+        codigo,
+        usado: false,
+        expiraEm: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!registro) {
+      throw new BadRequestException('Código inválido ou expirado.');
+    }
+
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+    if (!usuario) {
+      throw new BadRequestException('Usuário não encontrado.');
+    }
+
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
+
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({
+        where: { id: usuario.id },
+        data: { senha: senhaHash },
+      }),
+      this.prisma.passwordReset.update({
+        where: { id: registro.id },
+        data: { usado: true },
+      }),
+    ]);
+
+    return { message: 'Senha redefinida com sucesso.' };
+  }
+
   async resetarSenha(email: string, novaSenha: string) {
     const usuario = await this.prisma.usuario.findUnique({ where: { email } });
     if (!usuario) {
@@ -338,7 +589,9 @@ export class AuthService {
     }
 
     if (!usuario.associado || !usuario.associado.primeiroAcesso) {
-      throw new BadRequestException('Primeiro acesso já realizado. Utilize o login normal.');
+      throw new BadRequestException(
+        'Primeiro acesso já realizado. Utilize o login normal.',
+      );
     }
 
     const senhaHash = await bcrypt.hash(novaSenha, 10);
@@ -350,7 +603,7 @@ export class AuthService {
       }),
       this.prisma.associado.update({
         where: { id: usuario.associado.id },
-        data: { primeiroAcesso: false },
+        data: { primeiroAcesso: false, status: 'ATIVO' },
       }),
     ]);
 
@@ -361,14 +614,15 @@ export class AuthService {
     this.validarEmail(dto.email);
     this.validarCpf(dto.cpf);
 
-    const emailExiste = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
+    const [emailExiste, cpfExiste, associacaoExiste] = await Promise.all([
+      this.prisma.usuario.findUnique({ where: { email: dto.email } }),
+      this.prisma.associado.findFirst({ where: { cpf: dto.cpf } }),
+      this.prisma.associacao.findUnique({ where: { id: dto.associacaoId } }),
+    ]);
     if (emailExiste) throw new BadRequestException('E-mail já cadastrado');
-
-    const cpfExiste = await this.prisma.associado.findFirst({ where: { cpf: dto.cpf } });
     if (cpfExiste) throw new BadRequestException('CPF já cadastrado');
-
-    const associacaoExiste = await this.prisma.associacao.findUnique({ where: { id: dto.associacaoId } });
-    if (!associacaoExiste) throw new BadRequestException('Associação não encontrada');
+    if (!associacaoExiste)
+      throw new BadRequestException('Associação não encontrada');
 
     const senhaHash = await bcrypt.hash(dto.senha, 10);
 
@@ -395,11 +649,22 @@ export class AuthService {
           numero: dto.numero,
           cep: dto.cep,
           cidade: dto.cidade,
+          estado: dto.estado ?? null,
           faculdade: dto.faculdade,
           curso: dto.curso,
           periodo: dto.periodo,
           matricula: dto.matricula,
+          diasTransporte: dto.diasTransporte ?? null,
+          transporteId: dto.transporteId ?? null,
+          poltrona: dto.poltrona ?? null,
           primeiroAcesso: false,
+        },
+        select: {
+          id: true,
+          nome: true,
+          cpf: true,
+          status: true,
+          associacaoId: true,
         },
       });
 

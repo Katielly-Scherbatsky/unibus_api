@@ -1,4 +1,11 @@
-import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class AutoCadastroAssociadoDto {
   @IsString()
@@ -60,6 +67,14 @@ export class AutoCadastroAssociadoDto {
   @IsString()
   @IsOptional()
   diasTransporte?: string;
+
+  @IsInt()
+  @IsOptional()
+  transporteId?: number;
+
+  @IsInt()
+  @IsOptional()
+  poltrona?: number;
 
   @IsString()
   @MinLength(6)

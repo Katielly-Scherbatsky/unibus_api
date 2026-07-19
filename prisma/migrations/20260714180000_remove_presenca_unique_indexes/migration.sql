@@ -1,0 +1,2 @@
+-- PresencaChamada unique indexes were already removed in a previous operation.
+-- This migration is intentionally empty.

@@ -1,4 +1,12 @@
-import { IsEmail, IsNotEmpty, IsString, IsNumber, ValidateNested, MinLength, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  ValidateNested,
+  MinLength,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class UsuarioDto {
@@ -44,6 +52,10 @@ class AdminDto {
   @IsString()
   @IsNotEmpty({ message: 'A cidade é obrigatória' })
   cidade!: string;
+
+  @IsString()
+  @IsOptional()
+  estado?: string;
 
   @IsString()
   @IsOptional()

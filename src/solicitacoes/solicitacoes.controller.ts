@@ -17,12 +17,19 @@ import { SolicitacoesService } from './solicitacoes.service';
 import { CreateSolicitacaoDto } from './dto/create-solicitacao.dto';
 import { UpdateSolicitacaoDto } from './dto/update-solicitacao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('solicitacoes')
 export class SolicitacoesController {
   constructor(private readonly service: SolicitacoesService) {}
+
+  private normalizarSortBy(sortBy?: string): string | undefined {
+    if (!sortBy) return undefined;
+    if (sortBy === 'statusVisual') return 'status';
+    return sortBy;
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -32,15 +39,30 @@ export class SolicitacoesController {
 
   @Get()
   findAll(
+    @CurrentUser() user: any,
     @Query('tipo') tipo?: string,
     @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+    @Query('busca') busca?: string,
   ) {
-    return this.service.findAll(tipo, status);
+    return this.service.findAll(
+      user.associacaoId,
+      tipo,
+      status,
+      page ? +page : undefined,
+      limit ? +limit : undefined,
+      this.normalizarSortBy(sortBy),
+      sortOrder,
+      busca,
+    );
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    return this.service.findOne(id, user.associacaoId);
   }
 
   @Put(':id')
@@ -53,16 +75,18 @@ export class SolicitacoesController {
   }
 
   @Patch(':id/status')
+  @Roles('ADMIN')
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body('acao') acao: 'APROVAR' | 'RECUSAR',
     @CurrentUser() user: any,
   ) {
-    return this.service.updateStatus(id, acao, user.email, user.usuarioId);
+    return this.service.updateStatus(id, acao, user.nome, user.usuarioId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles('ADMIN')
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.service.remove(id, user.usuarioId);
   }

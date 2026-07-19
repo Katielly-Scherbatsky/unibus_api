@@ -14,12 +14,12 @@ export class DashboardController {
   }
 
   @Get('resumo-mensal')
-  resumoMensal() {
-    return this.service.resumoMensal();
+  resumoMensal(@CurrentUser() user: any) {
+    return this.service.resumoMensal(user.associacaoId);
   }
 
   @Get('distribuicao-faculdades')
-  distribuicaoFaculdades() {
-    return this.service.distribuicaoFaculdades();
+  distribuicaoFaculdades(@CurrentUser() user: any) {
+    return this.service.distribuicaoFaculdades(user.associacaoId);
   }
 }

@@ -1,4 +1,10 @@
-import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateAssociadoDto {
   @IsString()
@@ -69,9 +75,9 @@ export class CreateAssociadoDto {
   @IsOptional()
   transporteId?: number;
 
-  @IsString()
+  @IsInt()
   @IsOptional()
-  poltrona?: string;
+  poltrona?: number;
 
   @IsString()
   @IsOptional()

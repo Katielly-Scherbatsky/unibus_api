@@ -49,21 +49,32 @@ export class AssociacoesService {
     };
   }
 
-  async update(id: number, dto: UpdateAssociacaoDto & Record<string, any>, updatedBy?: number) {
+  async update(
+    id: number,
+    dto: UpdateAssociacaoDto & Record<string, any>,
+    updatedBy?: number,
+  ) {
     await this.findOne(id);
 
     const associacaoData: any = {};
-    if (dto.nomeAssociacao !== undefined) associacaoData.nome = dto.nomeAssociacao;
+    if (dto.nomeAssociacao !== undefined)
+      associacaoData.nome = dto.nomeAssociacao;
     if (dto.sigla !== undefined) associacaoData.sigla = dto.sigla;
     if (dto.cnpj !== undefined) associacaoData.cnpj = dto.cnpj;
-    if (dto.emailInstitucional !== undefined) associacaoData.email = dto.emailInstitucional;
-    if (dto.telefoneAssociacao !== undefined) associacaoData.telefone = dto.telefoneAssociacao;
+    if (dto.emailInstitucional !== undefined)
+      associacaoData.email = dto.emailInstitucional;
+    if (dto.telefoneAssociacao !== undefined)
+      associacaoData.telefone = dto.telefoneAssociacao;
     if (dto.ruaAssociacao !== undefined) associacaoData.rua = dto.ruaAssociacao;
-    if (dto.bairroAssociacao !== undefined) associacaoData.bairro = dto.bairroAssociacao;
-    if (dto.numeroAssociacao !== undefined) associacaoData.numero = dto.numeroAssociacao;
+    if (dto.bairroAssociacao !== undefined)
+      associacaoData.bairro = dto.bairroAssociacao;
+    if (dto.numeroAssociacao !== undefined)
+      associacaoData.numero = dto.numeroAssociacao;
     if (dto.cepAssociacao !== undefined) associacaoData.cep = dto.cepAssociacao;
-    if (dto.cidadeAssociacao !== undefined) associacaoData.cidade = dto.cidadeAssociacao;
-    if (dto.estadoAssociacao !== undefined) associacaoData.estado = dto.estadoAssociacao;
+    if (dto.cidadeAssociacao !== undefined)
+      associacaoData.cidade = dto.cidadeAssociacao;
+    if (dto.estadoAssociacao !== undefined)
+      associacaoData.estado = dto.estadoAssociacao;
 
     const temTransporte =
       dto.quantidadePoltronas !== undefined ||
@@ -88,10 +99,14 @@ export class AssociacoesService {
           const parsed = parseInt(dto.quantidadePoltronas, 10);
           transporteData.poltronas = isNaN(parsed) ? 0 : parsed;
         }
-        if (dto.diasTransporte !== undefined) transporteData.dias = dto.diasTransporte;
-        if (dto.horarioSaida !== undefined) transporteData.horarioIda = dto.horarioSaida;
-        if (dto.horarioRetorno !== undefined) transporteData.horarioVolta = dto.horarioRetorno;
-        if (dto.pontoPartida !== undefined) transporteData.pontoPartida = dto.pontoPartida;
+        if (dto.diasTransporte !== undefined)
+          transporteData.dias = dto.diasTransporte;
+        if (dto.horarioSaida !== undefined)
+          transporteData.horarioIda = dto.horarioSaida;
+        if (dto.horarioRetorno !== undefined)
+          transporteData.horarioVolta = dto.horarioRetorno;
+        if (dto.pontoPartida !== undefined)
+          transporteData.pontoPartida = dto.pontoPartida;
 
         if (existingTransporte) {
           await tx.transporte.update({

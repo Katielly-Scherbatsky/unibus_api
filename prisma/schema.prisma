@@ -8,137 +8,206 @@ datasource db {
 }
 
 model Usuario {
-  id             Int     @id @default(autoincrement())
-  email          String  @unique
-  senha          String
-  tipo           String
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  senha     String
+  tipo      String
+  avatarUrl String?
 
   associacaoId Int?
   associacao   Associacao? @relation(fields: [associacaoId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
-  associado Associado?
+  associado       Associado?
+  associadosAdmin Associado[] @relation("AssociadoAdmin")
+
+  @@index([associacaoId])
+  @@index([deletedAt])
+  @@index([createdAt])
 }
 
 model Associacao {
-  id        Int    @id @default(autoincrement())
-  nome      String
-  sigla     String
-  cnpj      String
-  email     String
-  telefone  String
-  rua       String
-  bairro    String
-  numero    String
-  cep       String
-  cidade    String
-  estado    String
+  id       Int    @id @default(autoincrement())
+  nome     String
+  sigla    String
+  cnpj     String
+  email    String
+  telefone String
+  rua      String
+  bairro   String
+  numero   String
+  cep      String
+  cidade   String
+  estado   String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
-  associados Associado[]
-  transportes Transporte[]
-  usuarios   Usuario[]
+  associados       Associado[]
+  transportes      Transporte[]
+  usuarios         Usuario[]
+  normasDocumentos NormaDocumento[]
+}
+
+model NormaDocumento {
+  id           Int        @id @default(autoincrement())
+  nome         String
+  url          String
+  tipo         String
+  categoria    String?    @default("DOCUMENTO")
+  associacaoId Int
+  associacao   Associacao @relation(fields: [associacaoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([associacaoId])
+  @@index([tipo])
+  @@index([categoria])
+  @@index([createdAt])
 }
 
 model Associado {
-  id              Int    @id @default(autoincrement())
-  usuarioId       Int @unique
-  associacaoId    Int
-  transporteId    Int?
-  nome            String
-  cpf             String
-  telefone        String
-  faculdade       String
-  curso           String
-  periodo         String
-  matricula       String
-  status          String
-  poltrona        String?
-  primeiroAcesso  Boolean @default(true)
-  rua             String
-  bairro          String
-  numero          String
-  cep             String
-  cidade          String
+  id             Int     @id @default(autoincrement())
+  usuarioId      Int     @unique
+  associacaoId   Int
+  transporteId   Int?
+  nome           String
+  cpf            String
+  telefone       String
+  faculdade      String
+  curso          String
+  periodo        String
+  matricula      String
+  status         String
+  poltrona       Int?
+  adminId        Int?
+  atendidoPor    String?
+  primeiroAcesso Boolean @default(true)
+  rua            String
+  bairro         String
+  numero         String
+  cep            String
+  cidade         String
+  estado         String?
+  diasTransporte String?
 
-  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
-  associacao  Associacao @relation(fields: [associacaoId], references: [id])
-  transporte  Transporte? @relation(fields: [transporteId], references: [id])
+  usuario    Usuario     @relation(fields: [usuarioId], references: [id])
+  admin      Usuario?    @relation("AssociadoAdmin", fields: [adminId], references: [id])
+  associacao Associacao  @relation(fields: [associacaoId], references: [id])
+  transporte Transporte? @relation(fields: [transporteId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
-  boletos       Boleto[]
-  solicitacoes  Solicitacao[]
-  avisos        Aviso[]
-  advertencias  Advertencia[]
-  presencas     PresencaChamada[]
+  boletos      Boleto[]
+  solicitacoes Solicitacao[]
+  advertencias Advertencia[]
+  avisoUsuarios AvisoUsuario[]
+  presencas    PresencaChamada[]
+  documentos   Documento[]
+
+  @@index([associacaoId])
+  @@index([associacaoId, status])
+  @@index([transporteId])
+  @@index([status])
+  @@index([cpf])
+  @@index([createdAt])
+  @@index([adminId])
+}
+
+model Documento {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  url         String
+  tipo        String
+  associadoId Int
+  associado   Associado @relation(fields: [associadoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([associadoId])
+  @@index([createdAt])
 }
 
 model Transporte {
-  id            Int    @id @default(autoincrement())
-  associacaoId  Int @unique
+  id            Int     @id @default(autoincrement())
+  associacaoId  Int     @unique
   poltronas     Int
   horarioIda    String
   horarioVolta  String
   dias          String
   pontoPartida  String
+  placa         String?
+  identificacao String?
+  rota          String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
-  associacao Associacao @relation(fields: [associacaoId], references: [id])
+  associacao Associacao  @relation(fields: [associacaoId], references: [id])
   associados Associado[]
   chamadas   Chamada[]
+
+  @@index([associacaoId])
 }
 
 model Chamada {
   id            Int      @id @default(autoincrement())
-  transporteId  Int @unique
+  transporteId  Int
   data          DateTime
   periodo       String
+  sentidoViagem String?
   status        String
+  motorista     String?
+  observacoes   String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
-  transporte Transporte @relation(fields: [transporteId], references: [id])
+  transporte Transporte        @relation(fields: [transporteId], references: [id])
   presencas  PresencaChamada[]
+
+  @@unique([transporteId, data, periodo])
+  @@index([transporteId])
+  @@index([data])
+  @@index([status])
+  @@index([createdAt])
+  @@index([data, status])
 }
 
 model PresencaChamada {
-  id           Int  @id @default(autoincrement())
-  chamadaId    Int @unique
-  associadoId  Int @unique
-  presente     Boolean
-  poltrona     Int
+  id          Int     @id @default(autoincrement())
+  chamadaId   Int
+  associadoId Int
+  presente    Boolean
+  poltrona    Int
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
@@ -146,78 +215,141 @@ model PresencaChamada {
 
   chamada   Chamada   @relation(fields: [chamadaId], references: [id])
   associado Associado @relation(fields: [associadoId], references: [id])
+
+  @@unique([chamadaId, associadoId])
+  @@index([chamadaId])
+  @@index([associadoId])
 }
 
 model Solicitacao {
-  id           Int      @id @default(autoincrement())
-  associadoId  Int @unique
-  data         DateTime
-  tipo         String
-  motivo       String
-  status       String
-  descricao    String
+  id          Int      @id @default(autoincrement())
+  associadoId Int
+  data        DateTime
+  tipo        String
+  motivo      String
+  status      String
+  descricao   String
+  atendidoPor String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
   associado Associado @relation(fields: [associadoId], references: [id])
+
+  @@index([associadoId])
+  @@index([status])
+  @@index([tipo])
+  @@index([createdAt])
 }
 
 model Boleto {
-  id           Int      @id @default(autoincrement())
-  associadoId  Int @unique
+  id             Int      @id @default(autoincrement())
+  associadoId    Int
   dataVencimento DateTime
-  valor        Float
-  status       String
+  valor          Float
+  status         String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
   associado Associado @relation(fields: [associadoId], references: [id])
+
+  @@index([associadoId])
+  @@index([status])
+  @@index([dataVencimento])
+  @@index([createdAt])
+  @@index([status, dataVencimento])
+}
+
+enum TipoAdvertencia {
+  HIGIENE
+  CONDUTA
+  PERTURBACAO
+  HORARIO
 }
 
 model Advertencia {
-  id           Int      @id @default(autoincrement())
-  associadoId  Int @unique
-  data         DateTime
-  tipo         String
-  motivo       String
-  status       String
-  descricao    String
+  id          Int              @id @default(autoincrement())
+  associadoId Int
+  data        DateTime
+  tipo        TipoAdvertencia
+  motivo      String
+  status      String
+  descricao   String
+  feitoPor    String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
 
   associado Associado @relation(fields: [associadoId], references: [id])
+
+  @@index([associadoId])
 }
 
 model Aviso {
-  id           Int      @id @default(autoincrement())
-  associadoId  Int @unique
-  data         DateTime
-  tipo         String
-  motivo       String
-  status       String
-  descricao    String
+  id          Int      @id @default(autoincrement())
+  data        DateTime
+  tipo        String
+  motivo      String
+  status      String
+  descricao   String
+  feitoPor    String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   createdBy Int?
   updatedBy Int?
   deletedBy Int?
   deletedAt DateTime?
-  
-  associado Associado @relation(fields: [associadoId], references: [id])
+
+  avisoUsuarios AvisoUsuario[]
+
+  @@index([status])
+  @@index([tipo])
+  @@index([createdAt])
+}
+
+model AvisoUsuario {
+  id          Int     @id @default(autoincrement())
+  avisoId     Int
+  associadoId Int
+  lido        Boolean @default(false)
+  dataLeitura DateTime?
+
+  aviso     Aviso     @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+  associado Associado @relation(fields: [associadoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([avisoId, associadoId])
+  @@index([avisoId])
+  @@index([associadoId])
+  @@index([lido])
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  email     String
+  codigo    String
+  expiraEm  DateTime
+  usado     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([codigo])
+  @@index([expiraEm])
+  @@index([usado])
 }

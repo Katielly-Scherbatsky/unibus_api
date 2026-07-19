@@ -1,9 +1,8 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateAdvertenciaDto {
-  @IsNumber()
   @IsNotEmpty()
-  associadoId!: number;
+  associadoId!: number | string;
 
   @IsString()
   @IsNotEmpty()

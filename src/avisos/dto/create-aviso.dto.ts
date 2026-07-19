@@ -1,10 +1,6 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateAvisoDto {
-  @IsNumber()
-  @IsNotEmpty()
-  associadoId!: number;
-
   @IsString()
   @IsNotEmpty()
   data!: string;

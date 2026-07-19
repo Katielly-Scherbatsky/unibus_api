@@ -1,4 +1,12 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export class PresencaDto {
   @IsNumber()
@@ -43,5 +51,8 @@ export class CreateChamadaDto {
   @IsOptional()
   status?: string;
 
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => PresencaDto)
   associados?: PresencaDto[];
 }
