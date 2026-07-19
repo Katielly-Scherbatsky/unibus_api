@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChamadaDto, PresencaDto } from './dto/create-chamada.dto';
 import { UpdateChamadaDto } from './dto/update-chamada.dto';
@@ -79,7 +79,7 @@ export class ChamadasService {
       : (dto.transporteId ?? 1);
     const dataUTC = new Date(`${dto.data}T00:00:00.000Z`);
     const associadosAtivos = await this.filtrarAssociadosAtivos(dto.associados);
-    const status = this.calcularStatusChamada(associadosAtivos);
+    const status = 'PENDENTE';
 
     return this.prisma.$transaction(async (tx) => {
       const chamada = await tx.chamada.upsert({
@@ -408,11 +408,15 @@ export class ChamadasService {
     updatedBy?: number,
     associacaoId?: number,
   ) {
+    const chamadaExistente = await this.findOne(id, associacaoId);
+    if (chamadaExistente.status === 'FINALIZADO' || chamadaExistente.status === 'FINALIZADA') {
+      throw new BadRequestException(
+        'Apenas chamadas PENDENTE podem ser alteradas.',
+      );
+    }
+
     const associadosAtivos = await this.filtrarAssociadosAtivos(dto.associados);
-    const [_, status] = await Promise.all([
-      this.findOne(id, associacaoId),
-      this.calcularStatusChamada(associadosAtivos),
-    ]);
+    const status = this.calcularStatusChamada(associadosAtivos);
 
     const transporteId = updatedBy
       ? await this.obterTransporteIdPorUsuario(updatedBy)
@@ -486,5 +490,20 @@ export class ChamadasService {
       }
       throw error;
     }
+  }
+
+  async finalizar(id: number, updatedBy?: number, associacaoId?: number) {
+    const chamada = await this.findOne(id, associacaoId);
+    if (chamada.status === 'FINALIZADO' || chamada.status === 'FINALIZADA') {
+      throw new BadRequestException('A chamada já está finalizada.');
+    }
+    return this.prisma.chamada.update({
+      where: { id },
+      data: {
+        status: 'FINALIZADO',
+        updatedBy,
+        updatedAt: new Date(),
+      },
+    });
   }
 }

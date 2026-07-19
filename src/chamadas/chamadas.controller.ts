@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -86,6 +87,15 @@ export class ChamadasController {
     @CurrentUser() user: any,
   ) {
     return this.service.update(id, dto, user.usuarioId, user.associacaoId);
+  }
+
+  @Patch(':id/finalizar')
+  @Roles('ADMIN')
+  finalizar(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: any,
+  ) {
+    return this.service.finalizar(id, user.usuarioId, user.associacaoId);
   }
 
   @Delete(':id')
