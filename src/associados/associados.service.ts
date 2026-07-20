@@ -319,6 +319,23 @@ export class AssociadosService {
     return updated;
   }
 
+  async findByUsuarioId(usuarioId: number) {
+    const associado = await this.prisma.associado.findFirst({
+      where: { usuarioId, deletedAt: null },
+      include: { usuario: { select: { email: true, tipo: true, avatarUrl: true } } },
+    });
+    if (!associado) throw new NotFoundException('Associado não encontrado');
+    return associado;
+  }
+
+  async updatePorUsuarioId(usuarioId: number, dto: UpdateAssociadoDto) {
+    const associado = await this.prisma.associado.findFirst({
+      where: { usuarioId, deletedAt: null },
+    });
+    if (!associado) throw new NotFoundException('Associado não encontrado');
+    return this.update(associado.id, dto, usuarioId);
+  }
+
   async atualizarStatus(
     id: number,
     status: string,

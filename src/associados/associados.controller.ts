@@ -97,6 +97,16 @@ export class AssociadosController {
     return this.service.listarCursos(assocId);
   }
 
+  @Get('me')
+  obterMe(@CurrentUser() user: any) {
+    return this.service.findByUsuarioId(user.usuarioId);
+  }
+
+  @Put('me')
+  atualizarMe(@CurrentUser() user: any, @Body() dto: UpdateAssociadoDto) {
+    return this.service.updatePorUsuarioId(user.usuarioId, dto);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.service.findOne(id, user.associacaoId);
