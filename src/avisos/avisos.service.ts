@@ -52,17 +52,23 @@ export class AvisosService {
   async findAll(tipo?: string, status?: string, busca?: string, associadoId?: number) {
     const where: any = { deletedAt: null };
     if (tipo) where.tipo = tipo;
-    if (status) where.status = status;
     if (busca) {
       where.OR = [
         { motivo: { contains: busca } },
         { descricao: { contains: busca } },
       ];
     }
+
     if (associadoId) {
-      where.avisoUsuarios = {
-        some: { associadoId },
-      };
+      if (status === 'LIDO') {
+        where.avisoUsuarios = { some: { associadoId, lido: true } };
+      } else if (status === 'PENDENTE') {
+        where.avisoUsuarios = { some: { associadoId, lido: false } };
+      } else {
+        where.avisoUsuarios = { some: { associadoId } };
+      }
+    } else {
+      if (status) where.status = status;
     }
 
     const avisos = await this.prisma.aviso.findMany({
