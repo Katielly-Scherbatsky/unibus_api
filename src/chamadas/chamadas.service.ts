@@ -210,6 +210,7 @@ export class ChamadasService {
         limit,
         sortBy,
         sortOrder,
+        sentidoViagem,
         periodo,
       );
     }
@@ -310,6 +311,7 @@ export class ChamadasService {
     limit = 20,
     sortBy?: string,
     sortOrder?: string,
+    sentidoViagem?: string,
     periodo?: string,
   ) {
     const associadoId = usuarioId
@@ -326,6 +328,7 @@ export class ChamadasService {
     const chamadaWhere: any = { deletedAt: null };
     if (associacaoId) chamadaWhere.transporte = { associacaoId };
     if (status) chamadaWhere.status = status;
+    if (sentidoViagem) chamadaWhere.sentidoViagem = sentidoViagem;
     if (periodo) chamadaWhere.periodo = periodo;
     if (data) {
       const { inicio, fim } = this.intervaloDiaUTC(data);
