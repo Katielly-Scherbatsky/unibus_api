@@ -6,16 +6,41 @@ export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
   async stats(associacaoId: number) {
-    const baseAssociado = {
+    const baseAssociado: any = {
       deletedAt: null,
-      associacaoId,
-      usuario: { tipo: 'ASSOCIADO' },
+      status: 'ATIVO',
     };
-    const baseAssociadoPendente = {
+    if (associacaoId) baseAssociado.associacaoId = associacaoId;
+
+    const baseAssociadoPendente: any = {
       deletedAt: null,
-      associacaoId,
       status: 'PENDENTE',
     };
+    if (associacaoId) baseAssociadoPendente.associacaoId = associacaoId;
+
+    const baseChamada: any = {
+      status: 'PENDENTE',
+      deletedAt: null,
+    };
+    if (associacaoId) baseChamada.transporte = { associacaoId };
+
+    const baseBoleto: any = {
+      status: 'PENDENTE',
+      deletedAt: null,
+    };
+    if (associacaoId) baseBoleto.associado = { associacaoId };
+
+    const baseSolicitacao: any = {
+      status: 'PENDENTE',
+      deletedAt: null,
+    };
+    if (associacaoId) baseSolicitacao.associado = { associacaoId };
+
+    const baseAdvertencia: any = {
+      status: 'PENDENTE',
+      deletedAt: null,
+    };
+    if (associacaoId) baseAdvertencia.associado = { associacaoId };
 
     const [
       membrosTotais,
@@ -26,34 +51,10 @@ export class DashboardService {
       cadastrosPendentes,
     ] = await Promise.all([
       this.prisma.associado.count({ where: baseAssociado }),
-      this.prisma.chamada.count({
-        where: {
-          status: 'PENDENTE',
-          deletedAt: null,
-          transporte: { associacaoId },
-        },
-      }),
-      this.prisma.boleto.count({
-        where: {
-          status: 'PENDENTE',
-          deletedAt: null,
-          associado: { associacaoId },
-        },
-      }),
-      this.prisma.solicitacao.count({
-        where: {
-          status: 'PENDENTE',
-          deletedAt: null,
-          associado: { associacaoId },
-        },
-      }),
-      this.prisma.advertencia.count({
-        where: {
-          status: 'PENDENTE',
-          deletedAt: null,
-          associado: { associacaoId },
-        },
-      }),
+      this.prisma.chamada.count({ where: baseChamada }),
+      this.prisma.boleto.count({ where: baseBoleto }),
+      this.prisma.solicitacao.count({ where: baseSolicitacao }),
+      this.prisma.advertencia.count({ where: baseAdvertencia }),
       this.prisma.associado.count({ where: baseAssociadoPendente }),
     ]);
 
