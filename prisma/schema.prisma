@@ -85,6 +85,7 @@ model Associado {
   nome           String
   cpf            String
   telefone       String
+  dataNascimento String?
   faculdade      String
   curso          String
   periodo        String

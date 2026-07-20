@@ -22,6 +22,7 @@ import { UpdateAssociadoDto } from './dto/update-associado.dto';
 import { UpdateAssociadoStatusDto } from './dto/update-associado-status.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Public } from '../auth/public.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { documentoStorage } from '../config/multer.config';
 
@@ -76,14 +77,24 @@ export class AssociadosController {
     );
   }
 
+  @Public()
   @Get('faculdades')
-  listarFaculdades(@CurrentUser() user: any) {
-    return this.service.listarFaculdades(user.associacaoId);
+  listarFaculdades(
+    @CurrentUser() user?: any,
+    @Query('associacaoId') associacaoIdQuery?: string,
+  ) {
+    const assocId = user?.associacaoId || (associacaoIdQuery ? +associacaoIdQuery : undefined);
+    return this.service.listarFaculdades(assocId);
   }
 
+  @Public()
   @Get('cursos')
-  listarCursos(@CurrentUser() user: any) {
-    return this.service.listarCursos(user.associacaoId);
+  listarCursos(
+    @CurrentUser() user?: any,
+    @Query('associacaoId') associacaoIdQuery?: string,
+  ) {
+    const assocId = user?.associacaoId || (associacaoIdQuery ? +associacaoIdQuery : undefined);
+    return this.service.listarCursos(assocId);
   }
 
   @Get(':id')

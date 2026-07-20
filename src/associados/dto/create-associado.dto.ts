@@ -26,6 +26,10 @@ export class CreateAssociadoDto {
 
   @IsString()
   @IsOptional()
+  dataNascimento?: string;
+
+  @IsString()
+  @IsOptional()
   status?: string;
 
   @IsString()

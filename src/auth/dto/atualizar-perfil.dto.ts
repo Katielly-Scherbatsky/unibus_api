@@ -40,4 +40,24 @@ export class AtualizarPerfilDto {
   @IsString()
   @IsOptional()
   estado?: string;
+
+  @IsString()
+  @IsOptional()
+  dataNascimento?: string;
+
+  @IsString()
+  @IsOptional()
+  faculdade?: string;
+
+  @IsString()
+  @IsOptional()
+  curso?: string;
+
+  @IsString()
+  @IsOptional()
+  periodo?: string;
+
+  @IsString()
+  @IsOptional()
+  matricula?: string;
 }

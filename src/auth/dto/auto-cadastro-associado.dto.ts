@@ -25,6 +25,10 @@ export class AutoCadastroAssociadoDto {
   telefone!: string;
 
   @IsString()
+  @IsOptional()
+  dataNascimento?: string;
+
+  @IsString()
   @IsNotEmpty()
   rua!: string;
 
