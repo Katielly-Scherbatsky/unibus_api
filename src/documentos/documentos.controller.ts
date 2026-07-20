@@ -40,7 +40,6 @@ export class DocumentosController {
   }
 
   @Post()
-  @Roles('ADMIN')
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -56,15 +55,17 @@ export class DocumentosController {
       file?: Express.Multer.File[];
       files?: Express.Multer.File[];
     },
-    @Body('associadoId', ParseIntPipe) associadoId: number,
+    @Body('associadoId') associadoIdRaw?: any,
     @Body('titulo') titulo?: string,
+    @CurrentUser() user?: any,
   ) {
+    const parsedId = associadoIdRaw ? parseInt(String(associadoIdRaw), 10) : undefined;
+    const associadoId = parsedId || user?.associadoId;
     const files = [...(uploaded?.file || []), ...(uploaded?.files || [])];
     return this.service.createMany(files, associadoId, titulo);
   }
 
   @Delete(':id')
-  @Roles('ADMIN')
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.service.remove(id, user.associacaoId);
   }
