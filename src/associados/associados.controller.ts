@@ -97,6 +97,16 @@ export class AssociadosController {
     return this.service.listarCursos(assocId);
   }
 
+  @Public()
+  @Get('opcoes-academicas')
+  obterOpcoesAcademicas(
+    @CurrentUser() user?: any,
+    @Query('associacaoId') associacaoIdQuery?: string,
+  ) {
+    const assocId = user?.associacaoId || (associacaoIdQuery ? +associacaoIdQuery : undefined);
+    return this.service.obterOpcoesAcademicas(assocId);
+  }
+
   @Get('me')
   obterMe(@CurrentUser() user: any) {
     return this.service.findByUsuarioId(user.usuarioId);

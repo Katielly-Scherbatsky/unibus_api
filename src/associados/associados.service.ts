@@ -227,6 +227,14 @@ export class AssociadosService {
     return result.map((r) => r.curso).filter(Boolean);
   }
 
+  async obterOpcoesAcademicas(associacaoId?: number) {
+    const [faculdades, cursos] = await Promise.all([
+      this.listarFaculdades(associacaoId),
+      this.listarCursos(associacaoId),
+    ]);
+    return { faculdades, cursos };
+  }
+
   async findOne(id: number, associacaoId?: number) {
     const where: any = { id, deletedAt: null };
     if (associacaoId) where.associacaoId = associacaoId;
