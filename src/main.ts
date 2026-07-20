@@ -14,6 +14,11 @@ async function bootstrap() {
 
   app.useStaticAssets(join(process.cwd(), 'public'), {
     prefix: '/public',
+    setHeaders: (res) => {
+      res.setHeader('Content-Disposition', 'inline');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    },
   });
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
