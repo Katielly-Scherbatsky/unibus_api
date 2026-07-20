@@ -12,33 +12,46 @@ export class DashboardController {
     private readonly prisma: PrismaService,
   ) {}
 
-  private async checkAcesso(usuarioId: number) {
+  private async isUserPendente(usuarioId: number) {
     const associado = await this.prisma.associado.findFirst({
       where: { usuarioId, deletedAt: null },
       select: { status: true },
     });
-    if (associado && associado.status === 'PENDENTE') {
-      throw new ForbiddenException(
-        'Associados com cadastro pendente não possuem permissão para visualizar o Dashboard.',
-      );
-    }
+    return associado?.status === 'PENDENTE';
   }
 
   @Get('stats')
   async stats(@CurrentUser() user: any) {
-    await this.checkAcesso(user.usuarioId);
+    const isPendente = await this.isUserPendente(user.usuarioId);
+    if (isPendente) {
+      return {
+        status: 'PENDENTE',
+        membrosTotais: 0,
+        chamadasPendentes: 0,
+        boletosPendentes: 0,
+        solicitacoesPendentes: 0,
+        advertenciasPendentes: 0,
+        cadastrosPendentes: 0,
+      };
+    }
     return this.service.stats(user.associacaoId);
   }
 
   @Get('resumo-mensal')
   async resumoMensal(@CurrentUser() user: any) {
-    await this.checkAcesso(user.usuarioId);
+    const isPendente = await this.isUserPendente(user.usuarioId);
+    if (isPendente) {
+      return { chamadas: [], pagamentos: [] };
+    }
     return this.service.resumoMensal(user.associacaoId);
   }
 
   @Get('distribuicao-faculdades')
   async distribuicaoFaculdades(@CurrentUser() user: any) {
-    await this.checkAcesso(user.usuarioId);
+    const isPendente = await this.isUserPendente(user.usuarioId);
+    if (isPendente) {
+      return [];
+    }
     return this.service.distribuicaoFaculdades(user.associacaoId);
   }
 }
