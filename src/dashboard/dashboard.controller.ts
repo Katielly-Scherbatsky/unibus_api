@@ -34,7 +34,8 @@ export class DashboardController {
         cadastrosPendentes: 0,
       };
     }
-    return this.service.stats(user.associacaoId);
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.stats(user.associacaoId, isAssociado ? user.associadoId : undefined);
   }
 
   @Get('resumo-mensal')

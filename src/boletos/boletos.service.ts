@@ -149,9 +149,14 @@ export class BoletosService {
     limit = 20,
     sortBy?: string,
     sortOrder?: string,
+    associadoId?: number,
   ) {
     const where: any = { deletedAt: null };
-    if (associacaoId) where.associado = { associacaoId };
+    if (associadoId) {
+      where.associadoId = associadoId;
+    } else if (associacaoId) {
+      where.associado = { associacaoId };
+    }
     this.aplicarFiltroStatus(where, status);
     if (dataEmissao) {
       const { inicio, fim } = this.intervaloDiaUTC(dataEmissao);
@@ -198,9 +203,13 @@ export class BoletosService {
     };
   }
 
-  async findOne(id: number, associacaoId?: number) {
+  async findOne(id: number, associacaoId?: number, associadoId?: number) {
     const where: any = { id, deletedAt: null };
-    if (associacaoId) where.associado = { associacaoId };
+    if (associadoId) {
+      where.associadoId = associadoId;
+    } else if (associacaoId) {
+      where.associado = { associacaoId };
+    }
     const boleto = await this.prisma.boleto.findFirst({
       where,
       include: { associado: { select: { nome: true } } },

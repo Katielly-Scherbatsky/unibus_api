@@ -53,9 +53,14 @@ export class SolicitacoesService {
     sortBy?: string,
     sortOrder?: string,
     busca?: string,
+    associadoId?: number,
   ) {
     const where: any = { deletedAt: null };
-    if (associacaoId) where.associado = { associacaoId };
+    if (associadoId) {
+      where.associadoId = associadoId;
+    } else if (associacaoId) {
+      where.associado = { associacaoId };
+    }
     if (tipo) where.tipo = tipo;
     if (status) where.status = status;
     if (busca) {
@@ -94,9 +99,13 @@ export class SolicitacoesService {
     };
   }
 
-  async findOne(id: number, associacaoId?: number) {
+  async findOne(id: number, associacaoId?: number, associadoId?: number) {
     const where: any = { id, deletedAt: null };
-    if (associacaoId) where.associado = { associacaoId };
+    if (associadoId) {
+      where.associadoId = associadoId;
+    } else if (associacaoId) {
+      where.associado = { associacaoId };
+    }
     const solicitacao = await this.prisma.solicitacao.findFirst({
       where,
       include: { associado: { select: { nome: true } } },

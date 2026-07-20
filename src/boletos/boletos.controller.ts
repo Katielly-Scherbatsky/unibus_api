@@ -56,6 +56,7 @@ export class BoletosController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: string,
   ) {
+    const isAssociado = user.tipo === 'ASSOCIADO';
     return this.service.findAll(
       user.associacaoId,
       status,
@@ -65,15 +66,18 @@ export class BoletosController {
       limit ? +limit : undefined,
       this.normalizarSortBy(sortBy),
       sortOrder,
+      isAssociado ? user.associadoId : undefined,
     );
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
-    return this.service.findOne(id, user.associacaoId);
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.findOne(id, user.associacaoId, isAssociado ? user.associadoId : undefined);
   }
 
   @Put(':id')
+  @Roles('ADMIN')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateBoletoDto,
@@ -84,6 +88,7 @@ export class BoletosController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles('ADMIN')
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.service.remove(id, user.usuarioId);
   }

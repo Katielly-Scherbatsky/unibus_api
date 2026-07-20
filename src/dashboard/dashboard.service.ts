@@ -5,7 +5,64 @@ import { PrismaService } from '../prisma/prisma.service';
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
-  async stats(associacaoId: number) {
+  async stats(associacaoId: number, associadoId?: number) {
+    if (associadoId) {
+      const baseAssociado = {
+        deletedAt: null,
+        status: 'ATIVO',
+      };
+      if (associacaoId) (baseAssociado as any).associacaoId = associacaoId;
+
+      const [
+        membrosTotais,
+        chamadasPendentes,
+        boletosPendentes,
+        solicitacoesPendentes,
+        advertenciasPendentes,
+      ] = await Promise.all([
+        this.prisma.associado.count({ where: baseAssociado }),
+        this.prisma.presencaChamada.count({
+          where: {
+            associadoId,
+            chamada: {
+              status: 'PENDENTE',
+              deletedAt: null,
+            },
+          },
+        }),
+        this.prisma.boleto.count({
+          where: {
+            associadoId,
+            status: 'PENDENTE',
+            deletedAt: null,
+          },
+        }),
+        this.prisma.solicitacao.count({
+          where: {
+            associadoId,
+            status: 'PENDENTE',
+            deletedAt: null,
+          },
+        }),
+        this.prisma.advertencia.count({
+          where: {
+            associadoId,
+            status: 'PENDENTE',
+            deletedAt: null,
+          },
+        }),
+      ]);
+
+      return {
+        membrosTotais,
+        chamadasPendentes,
+        boletosPendentes,
+        solicitacoesPendentes,
+        advertenciasPendentes,
+        cadastrosPendentes: 0,
+      };
+    }
+
     const baseAssociado: any = {
       deletedAt: null,
       status: 'ATIVO',

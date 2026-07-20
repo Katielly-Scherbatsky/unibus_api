@@ -49,7 +49,7 @@ export class AvisosService {
     });
   }
 
-  async findAll(tipo?: string, status?: string, busca?: string) {
+  async findAll(tipo?: string, status?: string, busca?: string, associadoId?: number) {
     const where: any = { deletedAt: null };
     if (tipo) where.tipo = tipo;
     if (status) where.status = status;
@@ -59,13 +59,18 @@ export class AvisosService {
         { descricao: { contains: busca } },
       ];
     }
+    if (associadoId) {
+      where.avisoUsuarios = {
+        some: { associadoId },
+      };
+    }
 
     const avisos = await this.prisma.aviso.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         avisoUsuarios: {
-          select: { lido: true },
+          select: { lido: true, associadoId: true },
         },
       },
     });
@@ -74,12 +79,17 @@ export class AvisosService {
       const total = aviso.avisoUsuarios.length;
       const lidos = aviso.avisoUsuarios.filter((u) => u.lido).length;
       const percentual = total > 0 ? Math.round((lidos / total) * 100) : 0;
+      const meuStatusLido = associadoId
+        ? aviso.avisoUsuarios.find((u) => u.associadoId === associadoId)?.lido ?? false
+        : false;
+
       return {
         ...aviso,
         avisoUsuarios: undefined,
         totalAssociados: total,
         totalLidos: lidos,
         percentualLido: percentual,
+        lidoPorMim: meuStatusLido,
       };
     });
   }

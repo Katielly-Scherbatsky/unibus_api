@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
         tipo: true,
         associacaoId: true,
-        associado: { select: { nome: true } },
+        associado: { select: { id: true, nome: true } },
       },
     });
 
@@ -34,6 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       nome: usuario.associado?.nome ?? usuario.email,
       tipo: usuario.tipo,
       associacaoId: usuario.associacaoId,
+      associadoId: usuario.associado?.id,
     };
   }
 }

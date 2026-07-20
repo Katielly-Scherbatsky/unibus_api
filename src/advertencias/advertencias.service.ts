@@ -51,8 +51,9 @@ export class AdvertenciasService {
     });
   }
 
-  async findAll(tipo?: string, status?: string, search?: string) {
+  async findAll(tipo?: string, status?: string, search?: string, associadoId?: number) {
     const where: any = { deletedAt: null };
+    if (associadoId) where.associadoId = associadoId;
     if (tipo) where.tipo = tipo;
     if (status) where.status = status;
     if (search?.trim()) {
@@ -80,9 +81,11 @@ export class AdvertenciasService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, associadoId?: number) {
+    const where: any = { id, deletedAt: null };
+    if (associadoId) where.associadoId = associadoId;
     const advertencia = await this.prisma.advertencia.findFirst({
-      where: { id, deletedAt: null },
+      where,
       include: { associado: { select: { nome: true } } },
     });
     if (!advertencia) throw new NotFoundException('Advertência não encontrada');

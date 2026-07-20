@@ -48,6 +48,7 @@ export class SolicitacoesController {
     @Query('sortOrder') sortOrder?: string,
     @Query('busca') busca?: string,
   ) {
+    const isAssociado = user.tipo === 'ASSOCIADO';
     return this.service.findAll(
       user.associacaoId,
       tipo,
@@ -57,12 +58,14 @@ export class SolicitacoesController {
       this.normalizarSortBy(sortBy),
       sortOrder,
       busca,
+      isAssociado ? user.associadoId : undefined,
     );
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
-    return this.service.findOne(id, user.associacaoId);
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.findOne(id, user.associacaoId, isAssociado ? user.associadoId : undefined);
   }
 
   @Put(':id')

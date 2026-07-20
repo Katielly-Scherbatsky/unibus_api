@@ -40,16 +40,19 @@ export class AdvertenciasController {
 
   @Get()
   findAll(
+    @CurrentUser() user: any,
     @Query('tipo') tipo?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
   ) {
-    return this.service.findAll(tipo, status, search);
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.findAll(tipo, status, search, isAssociado ? user.associadoId : undefined);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.findOne(id, isAssociado ? user.associadoId : undefined);
   }
 
   @Put(':id')

@@ -34,11 +34,13 @@ export class AvisosController {
 
   @Get()
   findAll(
+    @CurrentUser() user: any,
     @Query('tipo') tipo?: string,
     @Query('status') status?: string,
     @Query('busca') busca?: string,
   ) {
-    return this.service.findAll(tipo, status, busca);
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.findAll(tipo, status, busca, isAssociado ? user.associadoId : undefined);
   }
 
   @Get(':id')
