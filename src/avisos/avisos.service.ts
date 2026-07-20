@@ -84,6 +84,15 @@ export class AvisosService {
     });
   }
 
+  private async buscarAvisoOuFalhar(id: number) {
+    const aviso = await this.prisma.aviso.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, status: true },
+    });
+    if (!aviso) throw new NotFoundException('Aviso não encontrado');
+    return aviso;
+  }
+
   async findOne(id: number) {
     const aviso = await this.prisma.aviso.findFirst({
       where: { id, deletedAt: null },
@@ -109,22 +118,22 @@ export class AvisosService {
               },
             },
           },
-          orderBy: {
-            associado: {
-              nome: 'asc',
-            },
-          },
         },
       },
     });
     if (!aviso) throw new NotFoundException('Aviso não encontrado');
 
-    const total = aviso.avisoUsuarios.length;
-    const lidos = aviso.avisoUsuarios.filter((u: any) => u.lido).length;
+    const avisoUsuariosOrdenados = (aviso.avisoUsuarios || []).sort((a: any, b: any) =>
+      (a.associado?.nome || '').localeCompare(b.associado?.nome || ''),
+    );
+
+    const total = avisoUsuariosOrdenados.length;
+    const lidos = avisoUsuariosOrdenados.filter((u: any) => u.lido).length;
     const percentual = total > 0 ? Math.round((lidos / total) * 100) : 0;
 
     return {
       ...aviso,
+      avisoUsuarios: avisoUsuariosOrdenados,
       totalAssociados: total,
       totalLidos: lidos,
       percentualLido: percentual,
@@ -137,7 +146,12 @@ export class AvisosService {
     updatedBy?: number,
     feitoPor?: string,
   ) {
-    await this.findOne(id);
+    const avisoExistente = await this.findOne(id);
+    if (avisoExistente.status !== 'PENDENTE' || avisoExistente.percentualLido === 100) {
+      throw new BadRequestException(
+        'Avisos processados ou 100% lidos não podem ser alterados.',
+      );
+    }
     const data: any = {
       tipo: dto.tipo,
       motivo: dto.motivo,
@@ -158,7 +172,7 @@ export class AvisosService {
   }
 
   async remove(id: number, deletedBy?: number) {
-    const aviso = await this.findOne(id);
+    const aviso = await this.buscarAvisoOuFalhar(id);
     if (aviso.status !== 'PENDENTE') {
       throw new BadRequestException(
         'Apenas avisos com status PENDENTE podem ser excluídos.',
