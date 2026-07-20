@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSolicitacaoDto } from './dto/create-solicitacao.dto';
 import { UpdateSolicitacaoDto } from './dto/update-solicitacao.dto';
@@ -114,13 +114,24 @@ export class SolicitacoesService {
     return solicitacao;
   }
 
-  async update(id: number, dto: UpdateSolicitacaoDto, updatedBy?: number) {
-    await this.findOne(id);
+  async update(
+    id: number,
+    dto: UpdateSolicitacaoDto,
+    updatedBy?: number,
+    associadoId?: number,
+  ) {
+    const solicitacao = await this.findOne(id, undefined, associadoId);
+
+    const statusUpper = String(solicitacao.status || '').toUpperCase().trim();
+    if (statusUpper !== 'PENDENTE') {
+      throw new BadRequestException(
+        'Solicitações aprovadas ou recusadas não podem ser alteradas.',
+      );
+    }
+
     const data: any = {
-      associadoId: dto.associadoId,
       tipo: dto.tipo,
       motivo: dto.motivo,
-      status: dto.status,
       descricao: dto.descricao,
       updatedBy,
       updatedAt: new Date(),

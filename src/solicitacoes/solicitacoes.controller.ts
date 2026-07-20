@@ -74,7 +74,8 @@ export class SolicitacoesController {
     @Body() dto: UpdateSolicitacaoDto,
     @CurrentUser() user: any,
   ) {
-    return this.service.update(id, dto, user.usuarioId);
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.update(id, dto, user.usuarioId, isAssociado ? user.associadoId : undefined);
   }
 
   @Patch(':id/status')
