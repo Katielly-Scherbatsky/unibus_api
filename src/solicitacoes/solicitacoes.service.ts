@@ -125,7 +125,7 @@ export class SolicitacoesService {
     const statusUpper = String(solicitacao.status || '').toUpperCase().trim();
     if (statusUpper !== 'PENDENTE') {
       throw new BadRequestException(
-        'Solicitações aprovadas ou recusadas não podem ser alteradas.',
+        'Apenas solicitações pendentes podem ser editadas ou removidas.',
       );
     }
 
@@ -177,7 +177,16 @@ export class SolicitacoesService {
     });
   }
 
-  async remove(id: number, deletedBy?: number) {
+  async remove(id: number, deletedBy?: number, associadoId?: number) {
+    const solicitacao = await this.findOne(id, undefined, associadoId);
+
+    const statusUpper = String(solicitacao.status || '').toUpperCase().trim();
+    if (statusUpper !== 'PENDENTE') {
+      throw new BadRequestException(
+        'Apenas solicitações pendentes podem ser editadas ou removidas.',
+      );
+    }
+
     try {
       return await this.prisma.solicitacao.update({
         where: { id, deletedAt: null },

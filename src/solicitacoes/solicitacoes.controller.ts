@@ -90,8 +90,8 @@ export class SolicitacoesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('ADMIN')
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
-    return this.service.remove(id, user.usuarioId);
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.remove(id, user.usuarioId, isAssociado ? user.associadoId : undefined);
   }
 }
