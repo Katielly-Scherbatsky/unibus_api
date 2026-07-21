@@ -508,6 +508,7 @@ async function main() {
 
   const mapaId = new Map(usuariosEncontrados.map((u) => [u.email, u.id]))
 
+  let proximaPoltrona = 2
   const dadosAssociados = metadados.map((meta) => ({
     usuarioId: mapaId.get(meta.email)!,
     associacaoId: associacao.id,
@@ -520,7 +521,7 @@ async function main() {
     periodo: faker.helpers.arrayElement(['Matutino', 'Vespertino', 'Noturno']),
     matricula: meta.matricula,
     status: meta.status,
-    poltrona: null as number | null,
+    poltrona: meta.status === 'ATIVO' ? proximaPoltrona++ : null,
     rua: faker.helpers.arrayElement(ruasJiParana),
     bairro: faker.helpers.arrayElement(bairrosJiParana),
     numero: String(faker.number.int({ min: 10, max: 2000 })),
@@ -586,7 +587,22 @@ async function main() {
   })
 
   console.log('\n✨ RESET E SEED CONCLUÍDOS COM SUCESSO! (NOMES REAIS + JI-PARANÁ / RO) ✨\n')
-  console.log('🔑 LISTA DE CREDENCIAIS DE TESTE COM NOMES PESSOAIS REAIS:')
+
+  const associadosAtivosLog = await prisma.associado.findMany({
+    where: { status: 'ATIVO', usuario: { tipo: 'ASSOCIADO' } },
+    select: { nome: true, poltrona: true, status: true, usuario: { select: { email: true } } },
+    orderBy: { poltrona: 'asc' },
+  })
+
+  console.log('💺 POLTRONAS ÚNICAS E SEQUENCIAIS DOS ASSOCIADOS ATIVOS:')
+  console.log('===================================================================')
+  associadosAtivosLog.forEach((assoc) => {
+    const numPoltrona = assoc.poltrona !== null ? String(assoc.poltrona).padStart(2, '0') : 'N/A'
+    console.log(`- Poltrona ${numPoltrona}: ${assoc.nome} (${assoc.usuario.email})`)
+  })
+  console.log('-------------------------------------------------------------------')
+
+  console.log('\n🔑 LISTA DE CREDENCIAIS DE TESTE COM NOMES PESSOAIS REAIS:')
   console.log('===================================================================')
   console.log('1. ADMINISTRADOR:')
   console.log('   - Nome: Carlos Eduardo Silva')
