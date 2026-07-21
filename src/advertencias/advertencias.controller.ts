@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -77,4 +78,16 @@ export class AdvertenciasController {
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.service.remove(id, user.usuarioId);
   }
+
+  @Post(':id/lido')
+  @HttpCode(HttpStatus.OK)
+  marcarLidoPost(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    return this.service.marcarLido(id, user.associadoId);
+  }
+
+  @Patch(':id/lido')
+  marcarLidoPatch(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    return this.service.marcarLido(id, user.associadoId);
+  }
 }
+

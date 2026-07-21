@@ -147,4 +147,27 @@ export class AdvertenciasService {
       throw error;
     }
   }
+
+  async marcarLido(id: number, associadoId?: number) {
+    await this.findOne(id, associadoId);
+    return this.prisma.advertencia.update({
+      where: { id },
+      data: {
+        status: 'LIDO',
+        updatedAt: new Date(),
+      },
+      select: {
+        id: true,
+        associadoId: true,
+        data: true,
+        tipo: true,
+        motivo: true,
+        status: true,
+        descricao: true,
+        feitoPor: true,
+        updatedAt: true,
+      },
+    });
+  }
 }
+
