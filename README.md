@@ -109,7 +109,7 @@ Após a execução do `npx prisma db seed`, as seguintes contas com nomes reais 
 | :--- | :--- | :--- | :--- | :--- |
 | **Administrador** | Carlos Eduardo Silva | `admin@unibus.com` | `123` | Perfil `ADMIN` (Acesso total) |
 | **Associado Aprovado** | Mariana Oliveira Santos | `aprovado@unibus.com` | `123` | Perfil `ASSOCIADO` (Poltrona 01 - IFRO Ji-Paraná) |
-| **Associado Pendente** | Lucas Gabriel Souza | `pendente@unibus.com` | `123` | Perfil `ASSOCIADO` (Status `PENDENTE` - Aguardando Aprovação) |
+| **Associado Pendente** | Diego Ramos | `diego.ramos22@email.com` | `123` | Perfil `ASSOCIADO` (Status `PENDENTE` - Aguardando Aprovação) |
 
 ---
 
