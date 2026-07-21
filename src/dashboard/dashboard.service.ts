@@ -59,7 +59,6 @@ export class DashboardService {
         boletosPendentes,
         solicitacoesPendentes,
         advertenciasPendentes,
-        cadastrosPendentes: 0,
       };
     }
 
@@ -130,44 +129,44 @@ export class DashboardService {
       ? `AND c.transporteId IN (SELECT id FROM Transporte WHERE associacaoId = ${associacaoId})`
       : '';
 
-    const chamadas = await this.prisma.$queryRawUnsafe<
-      { mes: number; total: bigint }[]
-    >(`
-      SELECT MONTH(data) AS mes, COUNT(*) AS total
-      FROM Chamada
-      WHERE deletedAt IS NULL
-        AND status = 'FINALIZADO'
+    const query = `
+      SELECT 
+        MONTH(c.data) as mes,
+        COUNT(DISTINCT c.id) as chamadas,
+        (
+          SELECT COUNT(*) 
+          FROM Boleto b 
+          WHERE b.deletedAt IS NULL 
+            AND b.status = 'PAGO' 
+            AND MONTH(b.dataVencimento) = MONTH(c.data)
+            AND YEAR(b.dataVencimento) = YEAR(c.data)
+            ${associacaoId ? `AND b.associadoId IN (SELECT id FROM Associado WHERE associacaoId = ${associacaoId})` : ''}
+        ) as pagamentos
+      FROM Chamada c
+      WHERE c.deletedAt IS NULL 
+        AND c.status = 'FINALIZADO'
+        AND YEAR(c.data) = YEAR(CURRENT_DATE())
         ${whereClause}
-      GROUP BY MONTH(data)
-      ORDER BY mes
-    `);
+      GROUP BY MONTH(c.data)
+      ORDER BY mes ASC
+    `;
 
-    const whereBoleto = associacaoId
-      ? `AND b.associadoId IN (SELECT id FROM Associado WHERE associacaoId = ${associacaoId})`
-      : '';
-
-    const boletos = await this.prisma.$queryRawUnsafe<
-      { mes: number; total: bigint }[]
-    >(`
-      SELECT MONTH(dataVencimento) AS mes, COUNT(*) AS total
-      FROM Boleto b
-      WHERE deletedAt IS NULL
-        AND status = 'PAGO'
-        ${whereBoleto}
-      GROUP BY MONTH(dataVencimento)
-      ORDER BY mes
-    `);
-
-    return { chamadas, pagamentos: boletos };
+    return this.prisma.$queryRawUnsafe(query);
   }
 
   async distribuicaoFaculdades(associacaoId?: number) {
-    const where: any = { deletedAt: null };
+    const where: any = {
+      deletedAt: null,
+      status: 'ATIVO',
+    };
     if (associacaoId) where.associacaoId = associacaoId;
+
     return this.prisma.associado.groupBy({
       by: ['faculdade'],
       where,
-      _count: { id: true },
+      _count: {
+        id: true,
+      },
     });
   }
 }
