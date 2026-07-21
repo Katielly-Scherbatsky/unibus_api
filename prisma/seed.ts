@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, TipoAdvertencia } from '@prisma/client'
 import { fakerPT_BR as faker } from '@faker-js/faker'
 import * as bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
 
-const SENHA_PADRAO = 'senha123'
+const SENHA_PADRAO = '123'
 
 const faculdades = [
   'USP - Universidade de São Paulo',
@@ -44,12 +44,7 @@ const ruasSP = [
 ]
 
 const tiposSolicitacao = ['Troca de Ônibus', 'Troca de Poltrona', 'Cancelamento de Linha', 'Justificativa de Falta']
-const tiposAdvertencia = ['HIGIENE', 'CONDUTA', 'PERTURBACAO', 'HORARIO'] as const
-const titulosNormas = [
-  'Estatuto do Estudante 2026',
-  'Regulamento de Segurança e Convivência',
-  'Normas de Uso do Transporte Universitário',
-]
+const tiposAdvertencia: TipoAdvertencia[] = ['HIGIENE', 'CONDUTA', 'PERTURBACAO', 'HORARIO']
 
 function gerarDigito(cpf: number[]): number {
   let soma = 0
@@ -94,10 +89,6 @@ function formatarTelefone(num: string): string {
   return `(${ddd}) 9${num.slice(0, 4)}-${num.slice(4, 8)}`
 }
 
-function limparCpf(cpf: string): string {
-  return cpf.replace(/\D/g, '')
-}
-
 function diasAleatorios(): string[] {
   const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
   const quantidade = faker.number.int({ min: 2, max: 6 })
@@ -115,6 +106,7 @@ async function limparBanco() {
     'Boleto',
     'Solicitacao',
     'Advertencia',
+    'AvisoUsuario',
     'Aviso',
     'Associado',
     'Transporte',
@@ -137,16 +129,16 @@ async function main() {
   console.log('🏢 Criando associação...')
   const associacao = await prisma.associacao.create({
     data: {
-      nome: 'Associação de Transporte Unibus Osasco',
+      nome: 'Associação de Transporte Unibus',
       sigla: 'UNIBUS',
       cnpj: gerarCnpj(),
-      email: 'contato@unibusosasco.org.br',
+      email: 'contato@unibus.com',
       telefone: '(11) 3678-9012',
-      rua: 'Avenida dos Autonomistas',
-      bairro: 'Centro',
-      numero: '1500',
-      cep: '06020-010',
-      cidade: 'Osasco',
+      rua: 'Avenida Paulista',
+      bairro: 'Bela Vista',
+      numero: '1000',
+      cep: '01310-100',
+      cidade: 'São Paulo',
       estado: 'SP',
     },
   })
@@ -159,109 +151,335 @@ async function main() {
       horarioIda: '07:00',
       horarioVolta: '18:30',
       dias: 'Segunda,Terça,Quarta,Quinta,Sexta',
-      pontoPartida: 'Terminal Metropolitano de Osasco',
-      placa: 'ABC-1D23',
-      identificacao: 'Van 01',
-      rota: 'Osasco Centro → Universidade',
+      pontoPartida: 'Estação Barra Funda',
+      placa: 'BUS-2026',
+      identificacao: 'Ônibus Principal 01',
+      rota: 'Barra Funda → Campus Universitário',
     },
   })
 
-  console.log('👩‍💼 Criando administradores...')
-  const adminAna = await prisma.usuario.create({
+  console.log('👤 Criando usuários padrão (CREDENCIAIS DE TESTE)...')
+
+  // 1. ADMINISTRADOR
+  const userAdmin = await prisma.usuario.create({
     data: {
-      email: 'ana.paula@unibusosasco.org.br',
+      email: 'admin@unibus.com',
       senha: senhaHash,
       tipo: 'ADMIN',
       associacaoId: associacao.id,
     },
   })
-
-  const adminTeste = await prisma.usuario.create({
+  await prisma.associado.create({
     data: {
-      email: 'admin.teste@unibusosasco.org.br',
-      senha: senhaHash,
-      tipo: 'ADMIN',
+      usuarioId: userAdmin.id,
       associacaoId: associacao.id,
+      nome: 'Administrador Unibus',
+      cpf: gerarCpf(),
+      telefone: '(11) 99999-0000',
+      faculdade: 'USP - Universidade de São Paulo',
+      curso: 'Administração',
+      periodo: 'Noturno',
+      matricula: 'ADM001',
+      status: 'ATIVO',
+      rua: 'Avenida Paulista',
+      bairro: 'Bela Vista',
+      numero: '1000',
+      cep: '01310-100',
+      cidade: 'São Paulo',
+      diasTransporte: 'Segunda,Terça,Quarta,Quinta,Sexta',
+      primeiroAcesso: false,
     },
   })
 
-  await prisma.associado.createMany({
-    data: [
-      {
-        usuarioId: adminAna.id,
-        associacaoId: associacao.id,
-        nome: 'Ana Paula',
-        cpf: gerarCpf(),
-        telefone: '(11) 98765-4321',
-        faculdade: 'USP - Universidade de São Paulo',
-        curso: 'Administração',
-        periodo: 'Noturno',
-        matricula: '2023001',
-        status: 'ATIVO',
-        rua: 'Avenida dos Autonomistas',
-        bairro: 'Centro',
-        numero: '1500',
-        cep: '06020-010',
-        cidade: 'Osasco',
-        diasTransporte: 'Segunda,Terça,Quarta,Quinta,Sexta',
-        primeiroAcesso: false,
-      },
-      {
-        usuarioId: adminTeste.id,
-        associacaoId: associacao.id,
-        nome: 'Carlos Eduardo',
-        cpf: gerarCpf(),
-        telefone: '(11) 91234-5678',
-        faculdade: 'UNIP - Universidade Paulista',
-        curso: 'Direito',
-        periodo: 'Matutino',
-        matricula: '2023002',
-        status: 'ATIVO',
-        rua: 'Rua Antônio Agú',
-        bairro: 'Vila Yara',
-        numero: '245',
-        cep: '06026-010',
-        cidade: 'Osasco',
-        diasTransporte: 'Segunda,Quarta,Sexta',
-        primeiroAcesso: false,
-      },
-    ],
+  // 2. ASSOCIADO APROVADO
+  const userAprovado = await prisma.usuario.create({
+    data: {
+      email: 'aprovado@unibus.com',
+      senha: senhaHash,
+      tipo: 'ASSOCIADO',
+      associacaoId: associacao.id,
+    },
+  })
+  const associadoAprovado = await prisma.associado.create({
+    data: {
+      usuarioId: userAprovado.id,
+      associacaoId: associacao.id,
+      transporteId: transporte.id,
+      nome: 'Associado Aprovado Teste',
+      cpf: gerarCpf(),
+      telefone: '(11) 98888-1111',
+      faculdade: 'USP - Universidade de São Paulo',
+      curso: 'Ciência da Computação',
+      periodo: 'Noturno',
+      matricula: '2026001',
+      status: 'ATIVO',
+      poltrona: 1,
+      rua: 'Rua Augusta',
+      bairro: 'Consolação',
+      numero: '500',
+      cep: '01305-000',
+      cidade: 'São Paulo',
+      diasTransporte: 'Segunda,Terça,Quarta,Quinta,Sexta',
+      primeiroAcesso: false,
+    },
   })
 
-  console.log('🎓 Criando associados estudantes...')
-  const quantidadeAssociados = faker.number.int({ min: 15, max: 20 })
+  // 3. ASSOCIADO PENDENTE
+  const userPendente = await prisma.usuario.create({
+    data: {
+      email: 'pendente@unibus.com',
+      senha: senhaHash,
+      tipo: 'ASSOCIADO',
+      associacaoId: associacao.id,
+    },
+  })
+  await prisma.associado.create({
+    data: {
+      usuarioId: userPendente.id,
+      associacaoId: associacao.id,
+      transporteId: transporte.id,
+      nome: 'Associado Pendente Teste',
+      cpf: gerarCpf(),
+      telefone: '(11) 97777-2222',
+      faculdade: 'UNIP - Universidade Paulista',
+      curso: 'Engenharia de Software',
+      periodo: 'Matutino',
+      matricula: '2026002',
+      status: 'PENDENTE',
+      poltrona: null,
+      rua: 'Rua da Consolação',
+      bairro: 'Centro',
+      numero: '1200',
+      cep: '01301-100',
+      cidade: 'São Paulo',
+      diasTransporte: 'Segunda,Quarta,Sexta',
+      primeiroAcesso: true,
+    },
+  })
 
-  const dadosUsuarios: { email: string; senha: string; tipo: string; associacaoId: number }[] = []
+  console.log('📌 Criando cenários de teste para o Associado Aprovado...')
+
+  const hoje = new Date()
+
+  // A) BOLETOS DO ASSOCIADO APROVADO
+  // 1 Boleto PAGO
+  const dataPagoVenc = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 15)
+  const dataPagoEmis = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
+  await prisma.boleto.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      valor: 189.90,
+      status: 'PAGO',
+      dataVencimento: dataPagoVenc,
+      createdAt: dataPagoEmis,
+    },
+  })
+
+  // 1 Boleto PENDENTE (a vencer no mês vigente)
+  const dataPendVenc = new Date(hoje.getFullYear(), hoje.getMonth(), 25)
+  const dataPendEmis = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+  await prisma.boleto.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      valor: 189.90,
+      status: 'PENDENTE',
+      dataVencimento: dataPendVenc,
+      createdAt: dataPendEmis,
+    },
+  })
+
+  // 1 Boleto EM ATRASO (com data de vencimento retroativa)
+  const dataAtrasoVenc = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 10)
+  const dataAtrasoEmis = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1)
+  await prisma.boleto.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      valor: 189.90,
+      status: 'PENDENTE',
+      dataVencimento: dataAtrasoVenc,
+      createdAt: dataAtrasoEmis,
+    },
+  })
+
+  // B) SOLICITAÇÕES DO ASSOCIADO APROVADO
+  // 1 Solicitação PENDENTE
+  await prisma.solicitacao.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      tipo: 'Troca de Ônibus',
+      motivo: 'Alteração de horário da grade curricular',
+      descricao: 'Solicito alteração para a linha do período matutino.',
+      status: 'PENDENTE',
+      data: new Date(hoje.getTime() - 2 * 86400000),
+    },
+  })
+
+  // 1 Solicitação APROVADA
+  await prisma.solicitacao.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      tipo: 'Troca de Poltrona',
+      motivo: 'Preferência por assento na janela',
+      descricao: 'Gostaria de mudar da poltrona corredor para a poltrona 01 na janela.',
+      status: 'APROVADO',
+      atendidoPor: 'Administrador Unibus',
+      data: new Date(hoje.getTime() - 10 * 86400000),
+    },
+  })
+
+  // 1 Solicitação RECUSADA
+  await prisma.solicitacao.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      tipo: 'Justificativa de Falta',
+      motivo: 'Consulta médica',
+      descricao: 'Consulta médica agendada no horário da viagem.',
+      status: 'RECUSADO',
+      atendidoPor: 'Administrador Unibus',
+      data: new Date(hoje.getTime() - 15 * 86400000),
+    },
+  })
+
+  // C) CHAMADAS / PRESENÇA DO ASSOCIADO APROVADO
+  // Viagem no sentido IDA
+  const dataViagemIda = new Date(hoje.getFullYear(), hoje.getMonth(), Math.max(1, hoje.getDate() - 2))
+  const chamadaIda = await prisma.chamada.create({
+    data: {
+      transporteId: transporte.id,
+      data: dataViagemIda,
+      periodo: 'Noturno - Ida',
+      sentidoViagem: 'IDA',
+      status: 'FINALIZADO',
+      motorista: 'João Silva',
+      observacoes: 'Viagem de ida realizada sem ocorrências.',
+    },
+  })
+  await prisma.presencaChamada.create({
+    data: {
+      chamadaId: chamadaIda.id,
+      associadoId: associadoAprovado.id,
+      presente: true,
+      poltrona: 1,
+    },
+  })
+
+  // Viagem no sentido VOLTA
+  const dataViagemVolta = new Date(hoje.getFullYear(), hoje.getMonth(), Math.max(1, hoje.getDate() - 1))
+  const chamadaVolta = await prisma.chamada.create({
+    data: {
+      transporteId: transporte.id,
+      data: dataViagemVolta,
+      periodo: 'Noturno - Volta',
+      sentidoViagem: 'VOLTA',
+      status: 'FINALIZADO',
+      motorista: 'João Silva',
+      observacoes: 'Retorno realizado com sucesso.',
+    },
+  })
+  await prisma.presencaChamada.create({
+    data: {
+      chamadaId: chamadaVolta.id,
+      associadoId: associadoAprovado.id,
+      presente: true,
+      poltrona: 1,
+    },
+  })
+
+  // D) AVISOS DO ASSOCIADO APROVADO
+  // 1 Aviso PENDENTE (não lido pelo associado aprovado)
+  const avisoPendente = await prisma.aviso.create({
+    data: {
+      data: new Date(hoje.getTime() - 2 * 86400000),
+      tipo: 'Rota / Ponto',
+      motivo: 'Alteração temporária no ponto de embarque',
+      descricao: 'Devido a obras na via principal, o embarque nesta quinta ocorrerá 100m à frente.',
+      status: 'PENDENTE',
+      feitoPor: 'Administrador Unibus',
+    },
+  })
+  await prisma.avisoUsuario.create({
+    data: {
+      avisoId: avisoPendente.id,
+      associadoId: associadoAprovado.id,
+      lido: false,
+    },
+  })
+
+  // 1 Aviso LIDO (com confirmação de leitura registrada pelo associado aprovado)
+  const avisoLido = await prisma.aviso.create({
+    data: {
+      data: new Date(hoje.getTime() - 5 * 86400000),
+      tipo: 'Orientação',
+      motivo: 'Uso obrigatório do cinto de segurança',
+      descricao: 'Lembramos a todos que o uso do cinto de segurança é obrigatório durante todo o percurso.',
+      status: 'PENDENTE',
+      feitoPor: 'Administrador Unibus',
+    },
+  })
+  await prisma.avisoUsuario.create({
+    data: {
+      avisoId: avisoLido.id,
+      associadoId: associadoAprovado.id,
+      lido: true,
+      dataLeitura: new Date(hoje.getTime() - 4 * 86400000),
+    },
+  })
+
+  // E) ADVERTÊNCIAS DO ASSOCIADO APROVADO
+  // 1 Advertência PENDENTE (não lida)
+  await prisma.advertencia.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      data: new Date(hoje.getTime() - 3 * 86400000),
+      tipo: 'HORARIO',
+      motivo: 'Atraso recorrente no embarque da ida',
+      descricao: 'Notificado devido a atrasos superiores a 10 minutos no ponto de embarque.',
+      status: 'PENDENTE',
+      feitoPor: 'Administrador Unibus',
+    },
+  })
+
+  // 1 Advertência LIDA
+  await prisma.advertencia.create({
+    data: {
+      associadoId: associadoAprovado.id,
+      data: new Date(hoje.getTime() - 12 * 86400000),
+      tipo: 'CONDUTA',
+      motivo: 'Uso de alto-falante durante o trajeto',
+      descricao: 'Advertência emitida pelo uso de caixas de som sem fone de ouvido na viagem de retorno.',
+      status: 'LIDO',
+      feitoPor: 'Administrador Unibus',
+    },
+  })
+
+  console.log('🎓 Populando associados adicionais para volume de dados...')
+  const quantidadeAdicional = 15
+  const novosUsuarios: any[] = []
   const metadados: any[] = []
 
-  for (let i = 0; i < quantidadeAssociados; i++) {
+  for (let i = 0; i < quantidadeAdicional; i++) {
     const nome = faker.person.fullName()
     const primeiroNome = nome.split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     const sobrenome = nome.split(' ').slice(-1)[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    const email = `${primeiroNome}.${sobrenome}${faker.number.int({ min: 1, max: 999 })}@email.com`
+    const email = `${primeiroNome}.${sobrenome}${faker.number.int({ min: 10, max: 999 })}@email.com`
     const cpf = gerarCpf()
-    const telefoneRaw = faker.string.numeric(8)
-    const telefone = formatarTelefone(telefoneRaw)
-    const cep = `${faker.number.int({ min: 10000, max: 99999 }).toString().padStart(5, '0')}-${faker.number.int({ min: 100, max: 999 }).toString().padStart(3, '0')}`
-    const rua = faker.helpers.arrayElement(ruasSP)
-    const bairro = faker.helpers.arrayElement(bairrosSP)
+    const telefone = formatarTelefone(faker.string.numeric(8))
     const status = faker.helpers.arrayElement(['ATIVO', 'ATIVO', 'ATIVO', 'DESASSOCIADO', 'PENDENTE'])
-    const dias = diasAleatorios()
 
-    dadosUsuarios.push({ email, senha: senhaHash, tipo: 'ASSOCIADO', associacaoId: associacao.id })
-    metadados.push({ email, nome, cpf, telefone, cep, rua, bairro, status, dias, matricula: `2023${String(i + 100).padStart(3, '0')}` })
+    novosUsuarios.push({ email, senha: senhaHash, tipo: 'ASSOCIADO', associacaoId: associacao.id })
+    metadados.push({ email, nome, cpf, telefone, status, matricula: `2026${String(i + 10).padStart(3, '0')}` })
   }
 
-  await prisma.usuario.createMany({ data: dadosUsuarios, skipDuplicates: true })
-  const usuariosCriados = await prisma.usuario.findMany({
-    where: { email: { in: dadosUsuarios.map((u) => u.email) } },
+  await prisma.usuario.createMany({ data: novosUsuarios, skipDuplicates: true })
+  const usuariosEncontrados = await prisma.usuario.findMany({
+    where: { email: { in: novosUsuarios.map((u) => u.email) } },
     select: { id: true, email: true },
   })
 
-  const mapaUsuarioId = new Map(usuariosCriados.map((u) => [u.email, u.id]))
+  const mapaId = new Map(usuariosEncontrados.map((u) => [u.email, u.id]))
 
   const dadosAssociados = metadados.map((meta) => ({
-    usuarioId: mapaUsuarioId.get(meta.email)!,
+    usuarioId: mapaId.get(meta.email)!,
     associacaoId: associacao.id,
     transporteId: transporte.id,
     nome: meta.nome,
@@ -269,200 +487,100 @@ async function main() {
     telefone: meta.telefone,
     faculdade: faker.helpers.arrayElement(faculdades),
     curso: faker.helpers.arrayElement(cursos),
-    periodo: faker.helpers.arrayElement(['Matutino', 'Vespertino', 'Noturno', 'Integral']),
+    periodo: faker.helpers.arrayElement(['Matutino', 'Vespertino', 'Noturno']),
     matricula: meta.matricula,
     status: meta.status,
     poltrona: null as number | null,
-    rua: meta.rua,
-    bairro: meta.bairro,
+    rua: faker.helpers.arrayElement(ruasSP),
+    bairro: faker.helpers.arrayElement(bairrosSP),
     numero: String(faker.number.int({ min: 10, max: 2000 })),
-    cep: meta.cep,
+    cep: '01000-000',
     cidade: 'São Paulo',
-    diasTransporte: meta.dias.join(','),
+    diasTransporte: diasAleatorios().join(','),
     primeiroAcesso: false,
   }))
 
   await prisma.associado.createMany({ data: dadosAssociados, skipDuplicates: true })
 
-  let associadosCriados = await prisma.associado.findMany({
-    where: { associacaoId: associacao.id, usuario: { tipo: 'ASSOCIADO' } },
+  const todosAssociadosAtivos = await prisma.associado.findMany({
+    where: { associacaoId: associacao.id, status: 'ATIVO' },
   })
 
-  // Atribuir poltronas únicas dentro do ônibus
-  const poltronasUsadas = new Set<number>()
-  const atualizacoes: Promise<any>[] = []
-  for (const associado of associadosCriados.filter((a) => a.status === 'ATIVO')) {
-    let poltrona: number
-    do {
-      poltrona = faker.number.int({ min: 1, max: transporte.poltronas })
-    } while (poltronasUsadas.has(poltrona))
-    poltronasUsadas.add(poltrona)
-    atualizacoes.push(prisma.associado.update({ where: { id: associado.id }, data: { poltrona } }))
-    associado.poltrona = poltrona
-  }
-  await Promise.all(atualizacoes)
-
-  console.log('💰 Criando boletos...')
-  const statusBoleto = ['PAGO', 'PENDENTE', 'VENCIDO']
-  const valores = [175.0, 189.9, 175.0, 189.9, 210.0]
-  const todosBoletos: any[] = []
-  const hoje = new Date()
-  const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())
-
-  for (const associado of associadosCriados) {
-    const meses = faker.helpers.arrayElements(
-      Array.from({ length: 12 }, (_, i) => i),
-      faker.number.int({ min: 8, max: 12 }),
-    )
-
-    for (const mes of meses) {
-      const status = faker.helpers.arrayElement(statusBoleto)
-      let dataEmissao: Date
-      let dataVencimento: Date
-
-      if (status === 'PENDENTE') {
-        dataVencimento = faker.date.between({ from: inicioHoje, to: new Date(hoje.getFullYear() + 1, 11, 31) })
-        dataEmissao = new Date(dataVencimento)
-        dataEmissao.setDate(dataEmissao.getDate() - faker.number.int({ min: 5, max: 30 }))
-      } else if (status === 'VENCIDO') {
-        dataVencimento = faker.date.between({ from: new Date(2025, 0, 1), to: new Date(inicioHoje.getTime() - 1) })
-        dataEmissao = new Date(dataVencimento)
-        dataEmissao.setDate(dataEmissao.getDate() - faker.number.int({ min: 5, max: 30 }))
-      } else {
-        const ano = faker.helpers.arrayElement([2025, 2026])
-        dataEmissao = new Date(ano, mes, faker.number.int({ min: 1, max: 10 }))
-        dataVencimento = new Date(dataEmissao)
-        dataVencimento.setDate(dataVencimento.getDate() + 10)
-      }
-
-      todosBoletos.push({
-        associadoId: associado.id,
-        dataVencimento,
-        valor: faker.helpers.arrayElement(valores),
-        status,
-        createdAt: dataEmissao,
+  // Criar boletos extras para volume
+  const boletosExtras: any[] = []
+  for (const assoc of todosAssociadosAtivos) {
+    if (assoc.id === associadoAprovado.id) continue
+    for (let m = 0; m < 5; m++) {
+      const st = faker.helpers.arrayElement(['PAGO', 'PAGO', 'PENDENTE'])
+      const dtVenc = new Date(2026, m, 15)
+      boletosExtras.push({
+        associadoId: assoc.id,
+        dataVencimento: dtVenc,
+        valor: 189.90,
+        status: st,
+        createdAt: new Date(2026, m, 1),
       })
     }
   }
-  await prisma.boleto.createMany({ data: todosBoletos })
+  await prisma.boleto.createMany({ data: boletosExtras })
 
-  console.log('📋 Criando chamadas e presenças...')
-  const associadosAtivos = associadosCriados.filter((a) => a.status === 'ATIVO')
-  const chamadasCriadas: any[] = []
-
-  for (let i = 0; i < 12; i++) {
-    const mes = faker.number.int({ min: 0, max: 5 })
-    const dia = faker.number.int({ min: 1, max: 28 })
-    const data = new Date(2026, mes, dia)
-    const periodo = faker.helpers.arrayElement(['Matutino', 'Vespertino'])
-
-    const chamada = await prisma.chamada.create({
+  // Criar chamadas extras para volume (dias 5, 10, 15, 20, 25 de meses anteriores)
+  for (let m = 0; m < 5; m++) {
+    const dtChamada = new Date(2026, m, 10)
+    const chamadaExt = await prisma.chamada.create({
       data: {
         transporteId: transporte.id,
-        data,
-        periodo,
+        data: dtChamada,
+        periodo: `Noturno - Mês ${m + 1}`,
+        sentidoViagem: 'IDA',
         status: 'FINALIZADO',
-        motorista: faker.person.fullName(),
+        motorista: 'Carlos Motorista',
       },
     })
-    chamadasCriadas.push(chamada)
-
-    const presencas = associadosAtivos.map((a) => ({
-      chamadaId: chamada.id,
+    const presencasExt = todosAssociadosAtivos.map((a) => ({
+      chamadaId: chamadaExt.id,
       associadoId: a.id,
-      presente: faker.number.float({ min: 0, max: 1 }) > 0.15,
+      presente: faker.datatype.boolean(),
       poltrona: a.poltrona ?? 1,
     }))
-
-    await prisma.presencaChamada.createMany({ data: presencas, skipDuplicates: true })
+    await prisma.presencaChamada.createMany({ data: presencasExt, skipDuplicates: true })
   }
 
-  console.log('📝 Criando solicitações...')
-  const quantidadeSolicitacoes = faker.number.int({ min: 5, max: 8 })
-  const solicitacoesData = Array.from({ length: quantidadeSolicitacoes }, () => {
-    const status = faker.helpers.arrayElement(['PENDENTE', 'APROVADO', 'RECUSADO'])
-    return {
-      associadoId: faker.helpers.arrayElement(associadosCriados).id,
-      data: faker.date.between({ from: '2025-06-01', to: '2026-06-30' }),
-      tipo: faker.helpers.arrayElement(tiposSolicitacao),
-      motivo: faker.lorem.sentence(),
-      status,
-      descricao: faker.lorem.sentence().slice(0, 180),
-      atendidoPor: status !== 'PENDENTE' ? faker.helpers.arrayElement(['Ana Paula', 'Carlos Eduardo']) : null,
-    }
+  // Normas institucionais
+  await prisma.normaDocumento.createMany({
+    data: [
+      { nome: 'Estatuto do Estudante 2026', url: '/public/uploads/normas/estatuto_2026.pdf', tipo: 'PDF', associacaoId: associacao.id },
+      { nome: 'Regulamento do Transporte Acadêmico', url: '/public/uploads/normas/regulamento.pdf', tipo: 'PDF', associacaoId: associacao.id },
+    ],
   })
-  await prisma.solicitacao.createMany({ data: solicitacoesData })
 
-  console.log('⚠️ Criando advertências...')
-  const quantidadeAdvertencias = Math.min(faker.number.int({ min: 2, max: 4 }), associadosCriados.length)
-  const associadosAdvertencias = faker.helpers.arrayElements(associadosCriados, quantidadeAdvertencias)
-  const advertenciasData = associadosAdvertencias.map((associado) => ({
-    associadoId: associado.id,
-    data: faker.date.between({ from: '2025-08-01', to: '2026-06-30' }),
-    tipo: faker.helpers.arrayElement(tiposAdvertencia),
-    motivo: faker.lorem.sentence(),
-    status: 'PENDENTE',
-    descricao: faker.lorem.sentence().slice(0, 180),
-  }))
-  await prisma.advertencia.createMany({ data: advertenciasData })
-
-  console.log('📄 Criando avisos...')
-  const quantidadeAvisos = Math.min(3, associadosCriados.length)
-  const associadosAvisos = faker.helpers.arrayElements(associadosCriados, quantidadeAvisos)
-  const avisosData = associadosAvisos.map((associado) => ({
-    associadoId: associado.id,
-    data: faker.date.between({ from: '2025-10-01', to: '2026-06-30' }),
-    tipo: faker.helpers.arrayElement(['Feriado / Operação', 'Rota / Ponto', 'Orientação']),
-    motivo: faker.lorem.sentence(),
-    status: 'PENDENTE',
-    descricao: faker.lorem.sentence().slice(0, 180),
-  }))
-  await prisma.aviso.createMany({ data: avisosData })
-
-  console.log('📚 Criando normas institucionais...')
-  const normasData = titulosNormas.map((titulo, i) => ({
-    nome: titulo,
-    url: `/public/uploads/normas/norma_${i + 1}.pdf`,
-    tipo: 'PDF',
-    associacaoId: associacao.id,
-  }))
-  await prisma.normaDocumento.createMany({ data: normasData })
-
-  console.log('📎 Criando documentos pessoais...')
-  const tiposDocumento = ['RG_Frente.pdf', 'RG_Verso.pdf', 'Comprovante_Matricula.png', 'Comprovante_Residencia.pdf']
-  const documentosData: any[] = []
-  for (const associado of faker.helpers.arrayElements(associadosCriados, 5)) {
-    const quantidade = faker.number.int({ min: 1, max: 3 })
-    for (let i = 0; i < quantidade; i++) {
-      documentosData.push({
-        nome: faker.helpers.arrayElement(tiposDocumento),
-        url: `/public/uploads/documentos/${associado.id}_${faker.string.alphanumeric(8)}.pdf`,
-        tipo: 'DOCUMENTO_PESSOAL',
-        associadoId: associado.id,
-      })
-    }
-  }
-  await prisma.documento.createMany({ data: documentosData })
-
-  console.log('\n✅ Seed concluído com sucesso!')
-  console.log({
-    associacao: associacao.nome,
-    administradores: 2,
-    associados: associadosCriados.length,
-    boletos: await prisma.boleto.count(),
-    chamadas: await prisma.chamada.count(),
-    presencas: await prisma.presencaChamada.count(),
-    solicitacoes: await prisma.solicitacao.count(),
-    advertencias: await prisma.advertencia.count(),
-    avisos: await prisma.aviso.count(),
-    normas: await prisma.normaDocumento.count(),
-    documentos: await prisma.documento.count(),
-  })
+  console.log('\n✨ RESET E SEED CONCLUÍDOS COM SUCESSO! ✨\n')
+  console.log('🔑 CREDENCIAIS DE TESTE DISPONÍVEIS:')
+  console.log('===================================================================')
+  console.log('1. ADMINISTRADOR:')
+  console.log('   - Email: admin@unibus.com')
+  console.log('   - Senha: 123')
+  console.log('   - Perfil: ADMIN / Status: ATIVO')
+  console.log('-------------------------------------------------------------------')
+  console.log('2. ASSOCIADO APROVADO:')
+  console.log('   - Email: aprovado@unibus.com')
+  console.log('   - Senha: 123')
+  console.log('   - Perfil: ASSOCIADO / Status: APROVADO / ATIVO')
+  console.log('   - Cenários inclusos: Boletos (Pago, Pendente, Vencido),')
+  console.log('     Solicitações (Pendente, Aprovada, Recusada),')
+  console.log('     Chamadas (Ida, Volta), Avisos (Lido, Pendente),')
+  console.log('     Advertências (Lida, Pendente)')
+  console.log('-------------------------------------------------------------------')
+  console.log('3. ASSOCIADO PENDENTE:')
+  console.log('   - Email: pendente@unibus.com')
+  console.log('   - Senha: 123')
+  console.log('   - Perfil: ASSOCIADO / Status: PENDENTE')
+  console.log('===================================================================\n')
 }
 
 main()
   .catch((e) => {
-    console.error(e)
+    console.error('❌ Erro durante a execução do seed:', e)
     process.exit(1)
   })
   .finally(async () => {
