@@ -26,28 +26,50 @@ export class RelatoriosService {
     return new Date().getFullYear();
   }
 
-  private filtroAssociacaoBoleto(associacaoId?: number) {
-    return associacaoId
-      ? `AND b.associadoId IN (SELECT id FROM Associado WHERE associacaoId = ${associacaoId})`
-      : '';
-  }
-
-  private filtroAssociacaoChamada(associacaoId?: number) {
-    return associacaoId
-      ? `AND c.transporteId IN (SELECT id FROM Transporte WHERE associacaoId = ${associacaoId})`
-      : '';
-  }
-
-  async resumoMensal(associacaoId?: number) {
-    const ano = this.anoAtual();
+  async resumoMensal(associacaoId?: number, associadoId?: number, anoFiltro?: number) {
+    const ano = anoFiltro || this.anoAtual();
     const meses = this.getMesesDoAno();
-    const filtroBoleto = this.filtroAssociacaoBoleto(associacaoId);
-    const filtroChamada = this.filtroAssociacaoChamada(associacaoId);
 
-    const [boletosRows, chamadasRows] = await Promise.all([
-      this.prisma.$queryRawUnsafe<
-        { mes: number; total: bigint; pagos: bigint; pendentes: bigint }[]
-      >(`
+    let boletosSql: string;
+    let chamadasSql: string;
+
+    if (associadoId) {
+      boletosSql = `
+        SELECT
+          MONTH(dataVencimento) AS mes,
+          COUNT(*) AS total,
+          SUM(CASE WHEN status = 'PAGO' THEN 1 ELSE 0 END) AS pagos,
+          SUM(CASE WHEN status = 'PENDENTE' THEN 1 ELSE 0 END) AS pendentes
+        FROM Boleto
+        WHERE deletedAt IS NULL
+          AND YEAR(dataVencimento) = ${Number(ano)}
+          AND associadoId = ${Number(associadoId)}
+        GROUP BY MONTH(dataVencimento)
+        ORDER BY mes
+      `;
+      chamadasSql = `
+        SELECT
+          MONTH(c.data) AS mes,
+          COUNT(*) AS total
+        FROM PresencaChamada pc
+        JOIN Chamada c ON pc.chamadaId = c.id
+        WHERE c.deletedAt IS NULL
+          AND c.status = 'FINALIZADO'
+          AND YEAR(c.data) = ${Number(ano)}
+          AND pc.associadoId = ${Number(associadoId)}
+          AND pc.presente = 1
+        GROUP BY MONTH(c.data)
+        ORDER BY mes
+      `;
+    } else {
+      const filtroBoleto = associacaoId
+        ? `AND b.associadoId IN (SELECT id FROM Associado WHERE associacaoId = ${Number(associacaoId)})`
+        : '';
+      const filtroChamada = associacaoId
+        ? `AND c.transporteId IN (SELECT id FROM Transporte WHERE associacaoId = ${Number(associacaoId)})`
+        : '';
+
+      boletosSql = `
         SELECT
           MONTH(dataVencimento) AS mes,
           COUNT(*) AS total,
@@ -55,25 +77,36 @@ export class RelatoriosService {
           SUM(CASE WHEN status = 'PENDENTE' THEN 1 ELSE 0 END) AS pendentes
         FROM Boleto b
         WHERE deletedAt IS NULL
-          AND YEAR(dataVencimento) = ${ano}
+          AND YEAR(dataVencimento) = ${Number(ano)}
           ${filtroBoleto}
         GROUP BY MONTH(dataVencimento)
         ORDER BY mes
-      `),
-      this.prisma.$queryRawUnsafe<{ mes: number; total: bigint }[]>(`
-        SELECT MONTH(data) AS mes, COUNT(*) AS total
+      `;
+      chamadasSql = `
+        SELECT
+          MONTH(data) AS mes,
+          COUNT(*) AS total
         FROM Chamada c
         WHERE deletedAt IS NULL
           AND status = 'FINALIZADO'
-          AND YEAR(data) = ${ano}
+          AND YEAR(data) = ${Number(ano)}
           ${filtroChamada}
         GROUP BY MONTH(data)
         ORDER BY mes
-      `),
+      `;
+    }
+
+    const [boletosRows, chamadasRows] = await Promise.all([
+      this.prisma.$queryRawUnsafe<
+        { mes: number; total: bigint; pagos: bigint; pendentes: bigint }[]
+      >(boletosSql),
+      this.prisma.$queryRawUnsafe<{ mes: number; total: bigint }[]>(
+        chamadasSql,
+      ),
     ]);
 
-    const mapBoleto = new Map(boletosRows.map((r) => [r.mes, r]));
-    const mapChamada = new Map(chamadasRows.map((r) => [r.mes, r]));
+    const mapBoleto = new Map(boletosRows.map((r) => [Number(r.mes), r]));
+    const mapChamada = new Map(chamadasRows.map((r) => [Number(r.mes), r]));
 
     return meses.map((mes, index) => {
       const mesNum = index + 1;
@@ -99,37 +132,77 @@ export class RelatoriosService {
     });
   }
 
-  async chamadasVsPagamentos(associacaoId?: number) {
-    const ano = this.anoAtual();
+  async chamadasVsPagamentos(associacaoId?: number, associadoId?: number, anoFiltro?: number) {
+    const ano = anoFiltro || this.anoAtual();
     const meses = this.getMesesDoAno();
-    const filtroBoleto = this.filtroAssociacaoBoleto(associacaoId);
-    const filtroChamada = this.filtroAssociacaoChamada(associacaoId);
 
-    const [chamadasRows, pagamentosRows] = await Promise.all([
-      this.prisma.$queryRawUnsafe<{ mes: number; total: bigint }[]>(`
+    let chamadasSql: string;
+    let pagamentosSql: string;
+
+    if (associadoId) {
+      chamadasSql = `
+        SELECT MONTH(c.data) AS mes, COUNT(*) AS total
+        FROM PresencaChamada pc
+        JOIN Chamada c ON pc.chamadaId = c.id
+        WHERE c.deletedAt IS NULL
+          AND c.status = 'FINALIZADO'
+          AND YEAR(c.data) = ${Number(ano)}
+          AND pc.associadoId = ${Number(associadoId)}
+          AND pc.presente = 1
+        GROUP BY MONTH(c.data)
+        ORDER BY mes
+      `;
+      pagamentosSql = `
+        SELECT MONTH(dataVencimento) AS mes, COUNT(*) AS total
+        FROM Boleto
+        WHERE deletedAt IS NULL
+          AND status = 'PAGO'
+          AND YEAR(dataVencimento) = ${Number(ano)}
+          AND associadoId = ${Number(associadoId)}
+        GROUP BY MONTH(dataVencimento)
+        ORDER BY mes
+      `;
+    } else {
+      const filtroBoleto = associacaoId
+        ? `AND b.associadoId IN (SELECT id FROM Associado WHERE associacaoId = ${Number(associacaoId)})`
+        : '';
+      const filtroChamada = associacaoId
+        ? `AND c.transporteId IN (SELECT id FROM Transporte WHERE associacaoId = ${Number(associacaoId)})`
+        : '';
+
+      chamadasSql = `
         SELECT MONTH(data) AS mes, COUNT(*) AS total
         FROM Chamada c
         WHERE deletedAt IS NULL
           AND status = 'FINALIZADO'
-          AND YEAR(data) = ${ano}
+          AND YEAR(data) = ${Number(ano)}
           ${filtroChamada}
         GROUP BY MONTH(data)
         ORDER BY mes
-      `),
-      this.prisma.$queryRawUnsafe<{ mes: number; total: bigint }[]>(`
+      `;
+      pagamentosSql = `
         SELECT MONTH(dataVencimento) AS mes, COUNT(*) AS total
         FROM Boleto b
         WHERE deletedAt IS NULL
           AND status = 'PAGO'
-          AND YEAR(dataVencimento) = ${ano}
+          AND YEAR(dataVencimento) = ${Number(ano)}
           ${filtroBoleto}
         GROUP BY MONTH(dataVencimento)
         ORDER BY mes
-      `),
+      `;
+    }
+
+    const [chamadasRows, pagamentosRows] = await Promise.all([
+      this.prisma.$queryRawUnsafe<{ mes: number; total: bigint }[]>(
+        chamadasSql,
+      ),
+      this.prisma.$queryRawUnsafe<{ mes: number; total: bigint }[]>(
+        pagamentosSql,
+      ),
     ]);
 
-    const mapChamada = new Map(chamadasRows.map((r) => [r.mes, r]));
-    const mapPagamento = new Map(pagamentosRows.map((r) => [r.mes, r]));
+    const mapChamada = new Map(chamadasRows.map((r) => [Number(r.mes), r]));
+    const mapPagamento = new Map(pagamentosRows.map((r) => [Number(r.mes), r]));
 
     const dados = meses.map((mes, index) => ({
       mes,
@@ -145,7 +218,7 @@ export class RelatoriosService {
     };
   }
 
-  async associadosPorFaculdade(associacaoId?: number) {
+  async associadosPorFaculdade(associacaoId?: number, associadoId?: number) {
     const where: any = { deletedAt: null };
     if (associacaoId) where.associacaoId = associacaoId;
 
@@ -156,7 +229,7 @@ export class RelatoriosService {
     });
 
     const dados = agrupamento.map((item) => ({
-      faculdade: item.faculdade,
+      faculdade: item.faculdade || 'Não informada',
       quantidade: item._count.id,
     }));
 
