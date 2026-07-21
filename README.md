@@ -1,6 +1,6 @@
 # 🚌 Unibus API - Sistema de Gestão de Transporte Universitário
 
-> **Trabalho de Conclusão de Curso (TCC)** - Desenvolvido para o atendimento dos estudantes do **IFRO - Campus Ji-Paraná / RO** (Instituto Federal de Rondônia).
+> **Trabalho de Conclusão de Curso (TCC)**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-10-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
@@ -109,7 +109,7 @@ Após a execução do `npx prisma db seed`, as seguintes contas com nomes reais 
 | :--- | :--- | :--- | :--- | :--- |
 | **Administrador** | Carlos Eduardo Silva | `admin@unibus.com` | `123` | Perfil `ADMIN` (Acesso total) |
 | **Associado Aprovado** | Mariana Oliveira Santos | `aprovado@unibus.com` | `123` | Perfil `ASSOCIADO` (Poltrona 01 - IFRO Ji-Paraná) |
-| **Associado Pendente** | Lucas Gabriel Souza | `pendente@unibus.com` | `123` | Perfil `ASSOCIADO` (Status `PENDENTE` - Aguardando Aprovação) |
+| **Associado Pendente** | Diego Ramos | `diego.ramos22@email.com` | `123` | Perfil `ASSOCIADO` (Status `PENDENTE` - Aguardando Aprovação) |
 
 ---
 
