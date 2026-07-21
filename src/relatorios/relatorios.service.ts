@@ -26,6 +26,271 @@ export class RelatoriosService {
     return new Date().getFullYear();
   }
 
+  async obterDashboardMetrics(
+    associacaoId?: number,
+    associadoId?: number,
+    isAssociado = false,
+  ) {
+    const agora = new Date();
+    const ano = agora.getFullYear();
+    const mesAtual = agora.getMonth() + 1;
+
+    const inicioMes = new Date(ano, agora.getMonth(), 1);
+    const fimMes = new Date(ano, agora.getMonth() + 1, 0, 23, 59, 59);
+
+    if (isAssociado && associadoId) {
+      // --- DASHBOARD EXCLUSIVO DO ASSOCIADO ---
+      const [
+        boletosPagosCount,
+        boletosPendentesCount,
+        totalPagoSum,
+        totalEmAbertoSum,
+        proximoBoleto,
+        viagensMesCount,
+        viagensAnoCount,
+        solicPendentesCount,
+        solicAprovadasCount,
+        solicRecusadasCount,
+        avisosNaoLidosCount,
+        advertenciasCount,
+      ] = await Promise.all([
+        this.prisma.boleto.count({
+          where: { associadoId, status: 'PAGO', deletedAt: null },
+        }),
+        this.prisma.boleto.count({
+          where: { associadoId, status: 'PENDENTE', deletedAt: null },
+        }),
+        this.prisma.boleto.aggregate({
+          where: { associadoId, status: 'PAGO', deletedAt: null },
+          _sum: { valor: true },
+        }),
+        this.prisma.boleto.aggregate({
+          where: { associadoId, status: 'PENDENTE', deletedAt: null },
+          _sum: { valor: true },
+        }),
+        this.prisma.boleto.findFirst({
+          where: { associadoId, status: 'PENDENTE', deletedAt: null },
+          orderBy: { dataVencimento: 'asc' },
+          select: { id: true, valor: true, dataVencimento: true, status: true },
+        }),
+        this.prisma.presencaChamada.count({
+          where: {
+            associadoId,
+            presente: true,
+            chamada: {
+              status: 'FINALIZADO',
+              data: { gte: inicioMes, lte: fimMes },
+              deletedAt: null,
+            },
+          },
+        }),
+        this.prisma.presencaChamada.count({
+          where: {
+            associadoId,
+            presente: true,
+            chamada: {
+              status: 'FINALIZADO',
+              data: {
+                gte: new Date(ano, 0, 1),
+                lte: new Date(ano, 11, 31, 23, 59, 59),
+              },
+              deletedAt: null,
+            },
+          },
+        }),
+        this.prisma.solicitacao.count({
+          where: { associadoId, status: 'PENDENTE', deletedAt: null },
+        }),
+        this.prisma.solicitacao.count({
+          where: { associadoId, status: 'APROVADO', deletedAt: null },
+        }),
+        this.prisma.solicitacao.count({
+          where: { associadoId, status: 'RECUSADO', deletedAt: null },
+        }),
+        this.prisma.avisoUsuario.count({
+          where: { associadoId, lido: false },
+        }),
+        this.prisma.advertencia.count({
+          where: { associadoId, deletedAt: null },
+        }),
+      ]);
+
+      const resumo = await this.resumoMensal(associacaoId, associadoId, ano);
+      const chamadasVsPag = await this.chamadasVsPagamentos(
+        associacaoId,
+        associadoId,
+        ano,
+      );
+
+      return {
+        isAssociado: true,
+        cards: {
+          financeiro: {
+            totalPago: totalPagoSum._sum.valor || 0,
+            totalEmAberto: totalEmAbertoSum._sum.valor || 0,
+            boletosPagos: boletosPagosCount,
+            boletosPendentes: boletosPendentesCount,
+            proximoVencimento: proximoBoleto
+              ? {
+                  valor: proximoBoleto.valor,
+                  dataVencimento: proximoBoleto.dataVencimento,
+                }
+              : null,
+          },
+          embarques: {
+            viagensMes: viagensMesCount,
+            viagensAno: viagensAnoCount,
+          },
+          solicitacoes: {
+            pendentes: solicPendentesCount,
+            aprovadas: solicAprovadasCount,
+            recusadas: solicRecusadasCount,
+          },
+          comunicacao: {
+            avisosNaoLidos: avisosNaoLidosCount,
+            advertencias: advertenciasCount,
+          },
+        },
+        graficos: {
+          chamadasVsPagamentos: chamadasVsPag,
+        },
+        tabelaResumo: resumo,
+      };
+    } else {
+      // --- DASHBOARD GERAL ADMINISTRADOR ---
+      const whereAssociado: any = { deletedAt: null };
+      if (associacaoId) whereAssociado.associacaoId = associacaoId;
+
+      const [
+        associadosAtivosCount,
+        associadosPendentesCount,
+        arrecadadoMesSum,
+        emAtrasoSum,
+        boletosPagosCount,
+        boletosPendentesCount,
+        chamadasMesCount,
+        solicPendentesCount,
+        totalAvisosEnviados,
+        totalAvisosLidos,
+        totalAdvertenciasCount,
+      ] = await Promise.all([
+        this.prisma.associado.count({
+          where: { ...whereAssociado, status: 'ATIVO' },
+        }),
+        this.prisma.associado.count({
+          where: { ...whereAssociado, status: 'PENDENTE' },
+        }),
+        this.prisma.boleto.aggregate({
+          where: {
+            status: 'PAGO',
+            deletedAt: null,
+            dataVencimento: { gte: inicioMes, lte: fimMes },
+            associado: whereAssociado,
+          },
+          _sum: { valor: true },
+        }),
+        this.prisma.boleto.aggregate({
+          where: {
+            status: 'PENDENTE',
+            deletedAt: null,
+            associado: whereAssociado,
+          },
+          _sum: { valor: true },
+        }),
+        this.prisma.boleto.count({
+          where: { status: 'PAGO', deletedAt: null, associado: whereAssociado },
+        }),
+        this.prisma.boleto.count({
+          where: {
+            status: 'PENDENTE',
+            deletedAt: null,
+            associado: whereAssociado,
+          },
+        }),
+        this.prisma.chamada.count({
+          where: {
+            status: 'FINALIZADO',
+            deletedAt: null,
+            data: { gte: inicioMes, lte: fimMes },
+            transporte: associacaoId ? { associacaoId } : undefined,
+          },
+        }),
+        this.prisma.solicitacao.count({
+          where: {
+            status: 'PENDENTE',
+            deletedAt: null,
+            associado: whereAssociado,
+          },
+        }),
+        this.prisma.avisoUsuario.count({
+          where: {
+            aviso: { deletedAt: null },
+            associado: whereAssociado,
+          },
+        }),
+        this.prisma.avisoUsuario.count({
+          where: {
+            lido: true,
+            aviso: { deletedAt: null },
+            associado: whereAssociado,
+          },
+        }),
+        this.prisma.advertencia.count({
+          where: { deletedAt: null, associado: whereAssociado },
+        }),
+      ]);
+
+      const totalBoletosCount = boletosPagosCount + boletosPendentesCount;
+      const taxaInadimplencia =
+        totalBoletosCount > 0
+          ? Math.round((boletosPendentesCount / totalBoletosCount) * 100)
+          : 0;
+
+      const taxaLeituraAvisos =
+        totalAvisosEnviados > 0
+          ? Math.round((totalAvisosLidos / totalAvisosEnviados) * 100)
+          : 0;
+
+      const [resumo, chamadasVsPag, faculdades] = await Promise.all([
+        this.resumoMensal(associacaoId, undefined, ano),
+        this.chamadasVsPagamentos(associacaoId, undefined, ano),
+        this.associadosPorFaculdade(associacaoId),
+      ]);
+
+      return {
+        isAssociado: false,
+        cards: {
+          financeiro: {
+            totalArrecadadoMes: arrecadadoMesSum._sum.valor || 0,
+            valorEmAtraso: emAtrasoSum._sum.valor || 0,
+            boletosPagos: boletosPagosCount,
+            boletosPendentes: boletosPendentesCount,
+            taxaInadimplencia,
+          },
+          operacao: {
+            chamadasMes: chamadasMesCount,
+          },
+          associados: {
+            ativos: associadosAtivosCount,
+            pendentes: associadosPendentesCount,
+          },
+          solicitacoes: {
+            pendentes: solicPendentesCount,
+          },
+          comunicacao: {
+            taxaLeituraAvisos,
+            totalAdvertencias: totalAdvertenciasCount,
+          },
+        },
+        graficos: {
+          chamadasVsPagamentos: chamadasVsPag,
+          associadosPorFaculdade: faculdades,
+        },
+        tabelaResumo: resumo,
+      };
+    }
+  }
+
   async resumoMensal(associacaoId?: number, associadoId?: number, anoFiltro?: number) {
     const ano = anoFiltro || this.anoAtual();
     const meses = this.getMesesDoAno();

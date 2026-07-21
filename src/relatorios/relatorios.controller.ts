@@ -8,6 +8,16 @@ import { CurrentUser } from '../auth/current-user.decorator';
 export class RelatoriosController {
   constructor(private readonly service: RelatoriosService) {}
 
+  @Get('dashboard')
+  dashboard(@CurrentUser() user: any) {
+    const isAssociado = user.tipo === 'ASSOCIADO';
+    return this.service.obterDashboardMetrics(
+      user.associacaoId,
+      isAssociado ? user.associadoId : undefined,
+      isAssociado,
+    );
+  }
+
   @Get('resumo-mensal')
   resumoMensal(@CurrentUser() user: any, @Query('ano') ano?: string) {
     const isAssociado = user.tipo === 'ASSOCIADO';
