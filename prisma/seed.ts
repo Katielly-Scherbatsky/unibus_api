@@ -378,7 +378,7 @@ async function main() {
     data: {
       transporteId: transporte.id,
       data: dataViagemIda,
-      periodo: 'Noturno - Ida',
+      periodo: 'Noturno',
       sentidoViagem: 'IDA',
       status: 'FINALIZADO',
       motorista: 'José Roberto Souza',
@@ -400,7 +400,7 @@ async function main() {
     data: {
       transporteId: transporte.id,
       data: dataViagemVolta,
-      periodo: 'Noturno - Volta',
+      periodo: 'Noturno',
       sentidoViagem: 'VOLTA',
       status: 'FINALIZADO',
       motorista: 'José Roberto Souza',
@@ -561,7 +561,7 @@ async function main() {
       data: {
         transporteId: transporte.id,
         data: dtChamada,
-        periodo: `Noturno - Mês ${m + 1}`,
+        periodo: faker.helpers.arrayElement(['Noturno', 'Matutino', 'Vespertino']),
         sentidoViagem: 'IDA',
         status: 'FINALIZADO',
         motorista: 'José Roberto Souza',

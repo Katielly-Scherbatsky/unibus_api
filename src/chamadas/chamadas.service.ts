@@ -242,7 +242,10 @@ export class ChamadasService {
     if (associacaoId) where.transporte = { associacaoId };
     if (status) where.status = status;
     if (sentidoViagem) where.sentidoViagem = sentidoViagem;
-    if (periodo) where.periodo = periodo;
+    if (periodo) {
+      const pNorm = periodo.charAt(0).toUpperCase() + periodo.slice(1).toLowerCase();
+      where.periodo = { in: [periodo, pNorm, periodo.toUpperCase(), periodo.toLowerCase()] };
+    }
     if (data) {
       const { inicio, fim } = this.intervaloDiaUTC(data);
       where.data = { gte: inicio, lte: fim };
@@ -329,7 +332,10 @@ export class ChamadasService {
     if (associacaoId) chamadaWhere.transporte = { associacaoId };
     if (status) chamadaWhere.status = status;
     if (sentidoViagem) chamadaWhere.sentidoViagem = sentidoViagem;
-    if (periodo) chamadaWhere.periodo = periodo;
+    if (periodo) {
+      const pNorm = periodo.charAt(0).toUpperCase() + periodo.slice(1).toLowerCase();
+      chamadaWhere.periodo = { in: [periodo, pNorm, periodo.toUpperCase(), periodo.toLowerCase()] };
+    }
     if (data) {
       const { inicio, fim } = this.intervaloDiaUTC(data);
       chamadaWhere.data = { gte: inicio, lte: fim };
