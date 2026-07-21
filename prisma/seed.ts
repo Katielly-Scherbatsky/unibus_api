@@ -7,40 +7,53 @@ const prisma = new PrismaClient()
 const SENHA_PADRAO = '123'
 
 const faculdades = [
-  'USP - Universidade de São Paulo',
-  'UNIP - Universidade Paulista',
-  'FIAP - Faculdade de Informática e Administração Paulista',
-  'Mackenzie',
-  'Unifesp - Universidade Federal de São Paulo',
-  'PUC-SP',
-  'Uninove',
-  'FATEC',
+  'IFRO - Campus Ji-Paraná',
+  'IFRO - Campus Ji-Paraná',
+  'IFRO - Campus Ji-Paraná',
+  'UNIR - Campus Ji-Paraná',
+  'Estácio Unijipa - Ji-Paraná',
+  'Ulbra Ji-Paraná',
+  'Faculdade SABER Ji-Paraná',
 ]
 
 const cursos = [
-  'Ciência da Computação',
+  'Análise e Desenvolvimento de Sistemas',
+  'Engenharia Florestal',
+  'Licenciatura em Química',
+  'Técnico em Informática',
+  'Técnico em Química',
+  'Edificações',
   'Engenharia Civil',
   'Direito',
-  'Psicologia',
   'Administração',
-  'Medicina',
-  'Arquitetura e Urbanismo',
-  'Engenharia de Software',
-  'Marketing',
-  'Contabilidade',
+  'Agronomia',
 ]
 
-const bairrosSP = [
-  'Centro', 'Pinheiros', 'Vila Mariana', 'Moema', 'Itaim Bibi',
-  'Jardins', 'Liberdade', 'Santana', 'Tatuapé', 'Brooklin',
-  'Morumbi', 'Vila Madalena', 'Butantã', 'Ipiranga', 'Sacomã',
+const bairrosJiParana = [
+  'Beira Rio',
+  'Centro',
+  'Dois de Julho',
+  'Jardim Migrantês',
+  'Nova Brasília',
+  'Urupá',
+  'Vila Jotão',
+  'Dom Bosco',
+  'São Cristóvão',
+  'Jardim dos Migrantes',
+  'Capelasso',
 ]
 
-const ruasSP = [
-  'Rua Augusta', 'Avenida Paulista', 'Rua Oscar Freire', 'Avenida Brigadeiro Faria Lima',
-  'Rua da Consolação', 'Avenida Rebouças', 'Rua Haddock Lobo', 'Avenida Angélica',
-  'Rua dos Três Irmãos', 'Avenida Jaguaré', 'Rua Cardoso de Almeida', 'Avenida Pacaembu',
-  'Rua Teodoro Sampaio', 'Avenida Europa', 'Rua João Cachoeira',
+const ruasJiParana = [
+  'Rua Teresina',
+  'Avenida Transcontinental',
+  'Avenida Marechal Rondon',
+  'Avenida Brasil',
+  'Rua 22 de Novembro',
+  'Rua Seis de Maio',
+  'Avenida Ji-Paraná',
+  'Rua Monte Castelo',
+  'Rua Dom Augusto',
+  'Avenida Clodoaldo Cardoso',
 ]
 
 const tiposSolicitacao = ['Troca de Ônibus', 'Troca de Poltrona', 'Cancelamento de Linha', 'Justificativa de Falta']
@@ -85,7 +98,7 @@ function gerarCnpj(): string {
 }
 
 function formatarTelefone(num: string): string {
-  const ddd = ['11', '11', '11', '11', '12', '13', '15'][Math.floor(Math.random() * 7)]
+  const ddd = '69'
   return `(${ddd}) 9${num.slice(0, 4)}-${num.slice(4, 8)}`
 }
 
@@ -126,24 +139,24 @@ async function main() {
 
   const senhaHash = await bcrypt.hash(SENHA_PADRAO, 10)
 
-  console.log('🏢 Criando associação...')
+  console.log('🏢 Criando associação em Ji-Paraná / RO...')
   const associacao = await prisma.associacao.create({
     data: {
-      nome: 'Associação de Transporte Unibus',
-      sigla: 'UNIBUS',
+      nome: 'Associação de Transporte Universitário Unibus Ji-Paraná',
+      sigla: 'UNIBUS JIPA',
       cnpj: gerarCnpj(),
-      email: 'contato@unibus.com',
-      telefone: '(11) 3678-9012',
-      rua: 'Avenida Paulista',
-      bairro: 'Bela Vista',
-      numero: '1000',
-      cep: '01310-100',
-      cidade: 'São Paulo',
-      estado: 'SP',
+      email: 'contato@unibusjipa.com.br',
+      telefone: '(69) 3416-2800',
+      rua: 'Rua Teresina',
+      bairro: 'Beira Rio',
+      numero: '1240',
+      cep: '76907-528',
+      cidade: 'Ji-Paraná',
+      estado: 'RO',
     },
   })
 
-  console.log('🚌 Criando transporte...')
+  console.log('🚌 Criando transporte com rotas para o IFRO Ji-Paraná...')
   const transporte = await prisma.transporte.create({
     data: {
       associacaoId: associacao.id,
@@ -151,14 +164,14 @@ async function main() {
       horarioIda: '07:00',
       horarioVolta: '18:30',
       dias: 'Segunda,Terça,Quarta,Quinta,Sexta',
-      pontoPartida: 'Estação Barra Funda',
-      placa: 'BUS-2026',
-      identificacao: 'Ônibus Principal 01',
-      rota: 'Barra Funda → Campus Universitário',
+      pontoPartida: 'Av. Transcontinental (BR-364) - Centro, Ji-Paraná - RO',
+      placa: 'JPA-2026',
+      identificacao: 'Ônibus Escolar 01 - Ji-Paraná',
+      rota: 'Bairros ➔ IFRO Ji-Paraná',
     },
   })
 
-  console.log('👤 Criando usuários padrão (CREDENCIAIS DE TESTE)...')
+  console.log('👤 Criando usuários padrão com contexto de Ji-Paraná / RO...')
 
   // 1. ADMINISTRADOR
   const userAdmin = await prisma.usuario.create({
@@ -173,19 +186,19 @@ async function main() {
     data: {
       usuarioId: userAdmin.id,
       associacaoId: associacao.id,
-      nome: 'Administrador Unibus',
+      nome: 'Administrador IFRO Ji-Paraná',
       cpf: gerarCpf(),
-      telefone: '(11) 99999-0000',
-      faculdade: 'USP - Universidade de São Paulo',
-      curso: 'Administração',
+      telefone: '(69) 99999-0000',
+      faculdade: 'IFRO - Campus Ji-Paraná',
+      curso: 'Análise e Desenvolvimento de Sistemas',
       periodo: 'Noturno',
       matricula: 'ADM001',
       status: 'ATIVO',
-      rua: 'Avenida Paulista',
-      bairro: 'Bela Vista',
-      numero: '1000',
-      cep: '01310-100',
-      cidade: 'São Paulo',
+      rua: 'Rua Teresina',
+      bairro: 'Beira Rio',
+      numero: '1240',
+      cep: '76907-528',
+      cidade: 'Ji-Paraná',
       diasTransporte: 'Segunda,Terça,Quarta,Quinta,Sexta',
       primeiroAcesso: false,
     },
@@ -207,18 +220,18 @@ async function main() {
       transporteId: transporte.id,
       nome: 'Associado Aprovado Teste',
       cpf: gerarCpf(),
-      telefone: '(11) 98888-1111',
-      faculdade: 'USP - Universidade de São Paulo',
-      curso: 'Ciência da Computação',
+      telefone: '(69) 98888-1111',
+      faculdade: 'IFRO - Campus Ji-Paraná',
+      curso: 'Análise e Desenvolvimento de Sistemas',
       periodo: 'Noturno',
       matricula: '2026001',
       status: 'ATIVO',
       poltrona: 1,
-      rua: 'Rua Augusta',
-      bairro: 'Consolação',
+      rua: 'Av. Transcontinental (BR-364)',
+      bairro: 'Centro',
       numero: '500',
-      cep: '01305-000',
-      cidade: 'São Paulo',
+      cep: '76900-000',
+      cidade: 'Ji-Paraná',
       diasTransporte: 'Segunda,Terça,Quarta,Quinta,Sexta',
       primeiroAcesso: false,
     },
@@ -240,18 +253,18 @@ async function main() {
       transporteId: transporte.id,
       nome: 'Associado Pendente Teste',
       cpf: gerarCpf(),
-      telefone: '(11) 97777-2222',
-      faculdade: 'UNIP - Universidade Paulista',
-      curso: 'Engenharia de Software',
+      telefone: '(69) 97777-2222',
+      faculdade: 'UNIR - Campus Ji-Paraná',
+      curso: 'Engenharia Florestal',
       periodo: 'Matutino',
       matricula: '2026002',
       status: 'PENDENTE',
       poltrona: null,
-      rua: 'Rua da Consolação',
-      bairro: 'Centro',
+      rua: 'Avenida Marechal Rondon',
+      bairro: 'Dois de Julho',
       numero: '1200',
-      cep: '01301-100',
-      cidade: 'São Paulo',
+      cep: '76900-100',
+      cidade: 'Ji-Paraná',
       diasTransporte: 'Segunda,Quarta,Sexta',
       primeiroAcesso: true,
     },
@@ -307,7 +320,7 @@ async function main() {
     data: {
       associadoId: associadoAprovado.id,
       tipo: 'Troca de Ônibus',
-      motivo: 'Alteração de horário da grade curricular',
+      motivo: 'Alteração de horário da grade curricular no IFRO',
       descricao: 'Solicito alteração para a linha do período matutino.',
       status: 'PENDENTE',
       data: new Date(hoje.getTime() - 2 * 86400000),
@@ -322,7 +335,7 @@ async function main() {
       motivo: 'Preferência por assento na janela',
       descricao: 'Gostaria de mudar da poltrona corredor para a poltrona 01 na janela.',
       status: 'APROVADO',
-      atendidoPor: 'Administrador Unibus',
+      atendidoPor: 'Administrador IFRO Ji-Paraná',
       data: new Date(hoje.getTime() - 10 * 86400000),
     },
   })
@@ -335,12 +348,12 @@ async function main() {
       motivo: 'Consulta médica',
       descricao: 'Consulta médica agendada no horário da viagem.',
       status: 'RECUSADO',
-      atendidoPor: 'Administrador Unibus',
+      atendidoPor: 'Administrador IFRO Ji-Paraná',
       data: new Date(hoje.getTime() - 15 * 86400000),
     },
   })
 
-  // C) CHAMADAS / PRESENÇA DO ASSOCIADO APROVADO
+  // C) CHAMADAS / PRESENÇA DO ASSOCIADO APROVADO (ROTA BAIRROS ➔ IFRO JI-PARANÁ & IFRO JI-PARANÁ ➔ BAIRROS)
   // Viagem no sentido IDA
   const dataViagemIda = new Date(hoje.getFullYear(), hoje.getMonth(), Math.max(1, hoje.getDate() - 2))
   const chamadaIda = await prisma.chamada.create({
@@ -351,7 +364,7 @@ async function main() {
       sentidoViagem: 'IDA',
       status: 'FINALIZADO',
       motorista: 'João Silva',
-      observacoes: 'Viagem de ida realizada sem ocorrências.',
+      observacoes: 'Bairros ➔ IFRO Ji-Paraná - Viagem de ida realizada sem ocorrências.',
     },
   })
   await prisma.presencaChamada.create({
@@ -373,7 +386,7 @@ async function main() {
       sentidoViagem: 'VOLTA',
       status: 'FINALIZADO',
       motorista: 'João Silva',
-      observacoes: 'Retorno realizado com sucesso.',
+      observacoes: 'IFRO Ji-Paraná ➔ Bairros - Retorno concluído com sucesso.',
     },
   })
   await prisma.presencaChamada.create({
@@ -391,10 +404,10 @@ async function main() {
     data: {
       data: new Date(hoje.getTime() - 2 * 86400000),
       tipo: 'Rota / Ponto',
-      motivo: 'Alteração temporária no ponto de embarque',
-      descricao: 'Devido a obras na via principal, o embarque nesta quinta ocorrerá 100m à frente.',
+      motivo: 'Alteração temporária na parada Av. Transcontinental',
+      descricao: 'Devido a obras na BR-364, a parada no Centro será deslocada 100m à frente.',
       status: 'PENDENTE',
-      feitoPor: 'Administrador Unibus',
+      feitoPor: 'Administrador IFRO Ji-Paraná',
     },
   })
   await prisma.avisoUsuario.create({
@@ -410,10 +423,10 @@ async function main() {
     data: {
       data: new Date(hoje.getTime() - 5 * 86400000),
       tipo: 'Orientação',
-      motivo: 'Uso obrigatório do cinto de segurança',
-      descricao: 'Lembramos a todos que o uso do cinto de segurança é obrigatório durante todo o percurso.',
+      motivo: 'Uso obrigatório do cinto de segurança no trajeto ao IFRO',
+      descricao: 'Lembramos a todos os estudantes do IFRO que o uso do cinto de segurança é obrigatório durante todo o percurso.',
       status: 'PENDENTE',
-      feitoPor: 'Administrador Unibus',
+      feitoPor: 'Administrador IFRO Ji-Paraná',
     },
   })
   await prisma.avisoUsuario.create({
@@ -432,10 +445,10 @@ async function main() {
       associadoId: associadoAprovado.id,
       data: new Date(hoje.getTime() - 3 * 86400000),
       tipo: 'HORARIO',
-      motivo: 'Atraso recorrente no embarque da ida',
-      descricao: 'Notificado devido a atrasos superiores a 10 minutos no ponto de embarque.',
+      motivo: 'Atraso recorrente na parada do Bairro Dois de Julho',
+      descricao: 'Notificado devido a atrasos superiores a 10 minutos na parada da rota de ida ao IFRO.',
       status: 'PENDENTE',
-      feitoPor: 'Administrador Unibus',
+      feitoPor: 'Administrador IFRO Ji-Paraná',
     },
   })
 
@@ -445,14 +458,14 @@ async function main() {
       associadoId: associadoAprovado.id,
       data: new Date(hoje.getTime() - 12 * 86400000),
       tipo: 'CONDUTA',
-      motivo: 'Uso de alto-falante durante o trajeto',
-      descricao: 'Advertência emitida pelo uso de caixas de som sem fone de ouvido na viagem de retorno.',
+      motivo: 'Uso de alto-falante durante o trajeto de volta',
+      descricao: 'Advertência emitida pelo uso de caixas de som sem fone de ouvido na viagem de retorno do IFRO aos bairros.',
       status: 'LIDO',
-      feitoPor: 'Administrador Unibus',
+      feitoPor: 'Administrador IFRO Ji-Paraná',
     },
   })
 
-  console.log('🎓 Populando associados adicionais para volume de dados...')
+  console.log('🎓 Populando associados adicionais em Ji-Paraná / RO...')
   const quantidadeAdicional = 15
   const novosUsuarios: any[] = []
   const metadados: any[] = []
@@ -491,11 +504,11 @@ async function main() {
     matricula: meta.matricula,
     status: meta.status,
     poltrona: null as number | null,
-    rua: faker.helpers.arrayElement(ruasSP),
-    bairro: faker.helpers.arrayElement(bairrosSP),
+    rua: faker.helpers.arrayElement(ruasJiParana),
+    bairro: faker.helpers.arrayElement(bairrosJiParana),
     numero: String(faker.number.int({ min: 10, max: 2000 })),
-    cep: '01000-000',
-    cidade: 'São Paulo',
+    cep: '76900-000',
+    cidade: 'Ji-Paraná',
     diasTransporte: diasAleatorios().join(','),
     primeiroAcesso: false,
   }))
@@ -524,7 +537,7 @@ async function main() {
   }
   await prisma.boleto.createMany({ data: boletosExtras })
 
-  // Criar chamadas extras para volume (dias 5, 10, 15, 20, 25 de meses anteriores)
+  // Criar chamadas extras para volume (rota Bairros ➔ IFRO Ji-Paraná)
   for (let m = 0; m < 5; m++) {
     const dtChamada = new Date(2026, m, 10)
     const chamadaExt = await prisma.chamada.create({
@@ -535,6 +548,7 @@ async function main() {
         sentidoViagem: 'IDA',
         status: 'FINALIZADO',
         motorista: 'Carlos Motorista',
+        observacoes: 'Bairros ➔ IFRO Ji-Paraná',
       },
     })
     const presencasExt = todosAssociadosAtivos.map((a) => ({
@@ -546,16 +560,18 @@ async function main() {
     await prisma.presencaChamada.createMany({ data: presencasExt, skipDuplicates: true })
   }
 
-  // Normas institucionais
+  // Normas institucionais IFRO
   await prisma.normaDocumento.createMany({
     data: [
-      { nome: 'Estatuto do Estudante 2026', url: '/public/uploads/normas/estatuto_2026.pdf', tipo: 'PDF', associacaoId: associacao.id },
-      { nome: 'Regulamento do Transporte Acadêmico', url: '/public/uploads/normas/regulamento.pdf', tipo: 'PDF', associacaoId: associacao.id },
+      { nome: 'Estatuto do Estudante IFRO Ji-Paraná 2026', url: '/public/uploads/normas/estatuto_ifro_2026.pdf', tipo: 'PDF', associacaoId: associacao.id },
+      { nome: 'Regulamento de Transporte Escolar - Ji-Paraná RO', url: '/public/uploads/normas/regulamento_jipa.pdf', tipo: 'PDF', associacaoId: associacao.id },
     ],
   })
 
-  console.log('\n✨ RESET E SEED CONCLUÍDOS COM SUCESSO! ✨\n')
-  console.log('🔑 CREDENCIAIS DE TESTE DISPONÍVEIS:')
+  console.log('\n✨ RESET E SEED CONCLUÍDOS COM SUCESSO! (CONTEXTO: JI-PARANÁ / RO) ✨\n')
+  console.log('📍 FACULDADE PRINCIPAL: IFRO - Campus Ji-Paraná')
+  console.log('📍 ENDEREÇO IFRO: Rua Teresina, 1240 - Bairro Beira Rio, Ji-Paraná - RO, CEP: 76907-528')
+  console.log('📍 ROTAS: Bairros ➔ IFRO Ji-Paraná (Ida) / IFRO Ji-Paraná ➔ Bairros (Volta)')
   console.log('===================================================================')
   console.log('1. ADMINISTRADOR:')
   console.log('   - Email: admin@unibus.com')
@@ -566,10 +582,7 @@ async function main() {
   console.log('   - Email: aprovado@unibus.com')
   console.log('   - Senha: 123')
   console.log('   - Perfil: ASSOCIADO / Status: APROVADO / ATIVO')
-  console.log('   - Cenários inclusos: Boletos (Pago, Pendente, Vencido),')
-  console.log('     Solicitações (Pendente, Aprovada, Recusada),')
-  console.log('     Chamadas (Ida, Volta), Avisos (Lido, Pendente),')
-  console.log('     Advertências (Lida, Pendente)')
+  console.log('   - Instituição: IFRO - Campus Ji-Paraná')
   console.log('-------------------------------------------------------------------')
   console.log('3. ASSOCIADO PENDENTE:')
   console.log('   - Email: pendente@unibus.com')
