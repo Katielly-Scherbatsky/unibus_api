@@ -8,16 +8,19 @@ export class DocumentosService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(
-    associacaoId: number,
+    associacaoId?: number,
     associadoId?: number,
     page = 1,
-    limit = 20,
+    limit?: number,
   ) {
     const where: any = {};
-    if (associacaoId) where.associado = { associacaoId };
-    if (associadoId) where.associadoId = associadoId;
+    if (associadoId) {
+      where.associadoId = associadoId;
+    } else if (associacaoId) {
+      where.associado = { associacaoId };
+    }
 
-    const todos = Number(limit) === -1;
+    const todos = Number(limit) === -1 || (associadoId && (limit === undefined || limit === null));
     const take = todos
       ? undefined
       : Math.min(Math.max(Number(limit) || 20, 1), 100);
@@ -63,7 +66,6 @@ export class DocumentosService {
     return this.prisma.documento.findMany({
       where: { associadoId },
       orderBy: { createdAt: 'desc' },
-      take: files.length,
     });
   }
 
