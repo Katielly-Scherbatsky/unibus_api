@@ -56,6 +56,24 @@ const ruasJiParana = [
   'Avenida Clodoaldo Cardoso',
 ]
 
+const nomesReaisAssociados = [
+  'Beatriz Lima Ramos',
+  'Matheus Henrique Costa',
+  'Camila Ferreira Rocha',
+  'Rafael Barbosa Mendes',
+  'Juliana Castro Alencastro',
+  'Gabriel Santos Oliveira',
+  'Felipe Augusto Rocha',
+  'Isabela Souza Ribeiro',
+  'Vinícius Rodrigues Lima',
+  'Fernanda Alves Martins',
+  'Thiago Neves Pereira',
+  'Larissa Cardoso Dias',
+  'Diego Monteiro Ramos',
+  'Amanda Fernandes Castro',
+  'Bruno Carvalho Mendes',
+]
+
 const tiposSolicitacao = ['Troca de Ônibus', 'Troca de Poltrona', 'Cancelamento de Linha', 'Justificativa de Falta']
 const tiposAdvertencia: TipoAdvertencia[] = ['HIGIENE', 'CONDUTA', 'PERTURBACAO', 'HORARIO']
 
@@ -171,7 +189,7 @@ async function main() {
     },
   })
 
-  console.log('👤 Criando usuários padrão com contexto de Ji-Paraná / RO...')
+  console.log('👤 Criando usuários padrão com nomes reais de pessoas...')
 
   // 1. ADMINISTRADOR
   const userAdmin = await prisma.usuario.create({
@@ -186,7 +204,7 @@ async function main() {
     data: {
       usuarioId: userAdmin.id,
       associacaoId: associacao.id,
-      nome: 'Administrador IFRO Ji-Paraná',
+      nome: 'Carlos Eduardo Silva',
       cpf: gerarCpf(),
       telefone: '(69) 99999-0000',
       faculdade: 'IFRO - Campus Ji-Paraná',
@@ -218,7 +236,7 @@ async function main() {
       usuarioId: userAprovado.id,
       associacaoId: associacao.id,
       transporteId: transporte.id,
-      nome: 'Associado Aprovado Teste',
+      nome: 'Mariana Oliveira Santos',
       cpf: gerarCpf(),
       telefone: '(69) 98888-1111',
       faculdade: 'IFRO - Campus Ji-Paraná',
@@ -251,10 +269,10 @@ async function main() {
       usuarioId: userPendente.id,
       associacaoId: associacao.id,
       transporteId: transporte.id,
-      nome: 'Associado Pendente Teste',
+      nome: 'Lucas Gabriel Souza',
       cpf: gerarCpf(),
       telefone: '(69) 97777-2222',
-      faculdade: 'UNIR - Campus Ji-Paraná',
+      faculdade: 'IFRO - Campus Ji-Paraná',
       curso: 'Engenharia Florestal',
       periodo: 'Matutino',
       matricula: '2026002',
@@ -270,7 +288,7 @@ async function main() {
     },
   })
 
-  console.log('📌 Criando cenários de teste para o Associado Aprovado...')
+  console.log('📌 Criando cenários de teste para Mariana Oliveira Santos...')
 
   const hoje = new Date()
 
@@ -335,7 +353,7 @@ async function main() {
       motivo: 'Preferência por assento na janela',
       descricao: 'Gostaria de mudar da poltrona corredor para a poltrona 01 na janela.',
       status: 'APROVADO',
-      atendidoPor: 'Administrador IFRO Ji-Paraná',
+      atendidoPor: 'Carlos Eduardo Silva',
       data: new Date(hoje.getTime() - 10 * 86400000),
     },
   })
@@ -348,12 +366,12 @@ async function main() {
       motivo: 'Consulta médica',
       descricao: 'Consulta médica agendada no horário da viagem.',
       status: 'RECUSADO',
-      atendidoPor: 'Administrador IFRO Ji-Paraná',
+      atendidoPor: 'Carlos Eduardo Silva',
       data: new Date(hoje.getTime() - 15 * 86400000),
     },
   })
 
-  // C) CHAMADAS / PRESENÇA DO ASSOCIADO APROVADO (ROTA BAIRROS ➔ IFRO JI-PARANÁ & IFRO JI-PARANÁ ➔ BAIRROS)
+  // C) CHAMADAS / PRESENÇA DO ASSOCIADO APROVADO
   // Viagem no sentido IDA
   const dataViagemIda = new Date(hoje.getFullYear(), hoje.getMonth(), Math.max(1, hoje.getDate() - 2))
   const chamadaIda = await prisma.chamada.create({
@@ -363,7 +381,7 @@ async function main() {
       periodo: 'Noturno - Ida',
       sentidoViagem: 'IDA',
       status: 'FINALIZADO',
-      motorista: 'João Silva',
+      motorista: 'José Roberto Souza',
       observacoes: 'Bairros ➔ IFRO Ji-Paraná - Viagem de ida realizada sem ocorrências.',
     },
   })
@@ -385,7 +403,7 @@ async function main() {
       periodo: 'Noturno - Volta',
       sentidoViagem: 'VOLTA',
       status: 'FINALIZADO',
-      motorista: 'João Silva',
+      motorista: 'José Roberto Souza',
       observacoes: 'IFRO Ji-Paraná ➔ Bairros - Retorno concluído com sucesso.',
     },
   })
@@ -407,7 +425,7 @@ async function main() {
       motivo: 'Alteração temporária na parada Av. Transcontinental',
       descricao: 'Devido a obras na BR-364, a parada no Centro será deslocada 100m à frente.',
       status: 'PENDENTE',
-      feitoPor: 'Administrador IFRO Ji-Paraná',
+      feitoPor: 'Carlos Eduardo Silva',
     },
   })
   await prisma.avisoUsuario.create({
@@ -426,7 +444,7 @@ async function main() {
       motivo: 'Uso obrigatório do cinto de segurança no trajeto ao IFRO',
       descricao: 'Lembramos a todos os estudantes do IFRO que o uso do cinto de segurança é obrigatório durante todo o percurso.',
       status: 'PENDENTE',
-      feitoPor: 'Administrador IFRO Ji-Paraná',
+      feitoPor: 'Carlos Eduardo Silva',
     },
   })
   await prisma.avisoUsuario.create({
@@ -448,7 +466,7 @@ async function main() {
       motivo: 'Atraso recorrente na parada do Bairro Dois de Julho',
       descricao: 'Notificado devido a atrasos superiores a 10 minutos na parada da rota de ida ao IFRO.',
       status: 'PENDENTE',
-      feitoPor: 'Administrador IFRO Ji-Paraná',
+      feitoPor: 'Carlos Eduardo Silva',
     },
   })
 
@@ -461,27 +479,26 @@ async function main() {
       motivo: 'Uso de alto-falante durante o trajeto de volta',
       descricao: 'Advertência emitida pelo uso de caixas de som sem fone de ouvido na viagem de retorno do IFRO aos bairros.',
       status: 'LIDO',
-      feitoPor: 'Administrador IFRO Ji-Paraná',
+      feitoPor: 'Carlos Eduardo Silva',
     },
   })
 
-  console.log('🎓 Populando associados adicionais em Ji-Paraná / RO...')
-  const quantidadeAdicional = 15
+  console.log('🎓 Populando associados adicionais com nomes próprios reais em Ji-Paraná / RO...')
   const novosUsuarios: any[] = []
   const metadados: any[] = []
 
-  for (let i = 0; i < quantidadeAdicional; i++) {
-    const nome = faker.person.fullName()
-    const primeiroNome = nome.split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    const sobrenome = nome.split(' ').slice(-1)[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    const email = `${primeiroNome}.${sobrenome}${faker.number.int({ min: 10, max: 999 })}@email.com`
+  nomesReaisAssociados.forEach((nome, i) => {
+    const partes = nome.split(' ')
+    const primeiroNome = partes[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const sobrenome = partes[partes.length - 1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const email = `${primeiroNome}.${sobrenome}${i + 10}@email.com`
     const cpf = gerarCpf()
     const telefone = formatarTelefone(faker.string.numeric(8))
-    const status = faker.helpers.arrayElement(['ATIVO', 'ATIVO', 'ATIVO', 'DESASSOCIADO', 'PENDENTE'])
+    const status = i % 4 === 0 ? 'PENDENTE' : i % 5 === 0 ? 'DESASSOCIADO' : 'ATIVO'
 
     novosUsuarios.push({ email, senha: senhaHash, tipo: 'ASSOCIADO', associacaoId: associacao.id })
     metadados.push({ email, nome, cpf, telefone, status, matricula: `2026${String(i + 10).padStart(3, '0')}` })
-  }
+  })
 
   await prisma.usuario.createMany({ data: novosUsuarios, skipDuplicates: true })
   const usuariosEncontrados = await prisma.usuario.findMany({
@@ -498,7 +515,7 @@ async function main() {
     nome: meta.nome,
     cpf: meta.cpf,
     telefone: meta.telefone,
-    faculdade: faker.helpers.arrayElement(faculdades),
+    faculdade: 'IFRO - Campus Ji-Paraná',
     curso: faker.helpers.arrayElement(cursos),
     periodo: faker.helpers.arrayElement(['Matutino', 'Vespertino', 'Noturno']),
     matricula: meta.matricula,
@@ -547,7 +564,7 @@ async function main() {
         periodo: `Noturno - Mês ${m + 1}`,
         sentidoViagem: 'IDA',
         status: 'FINALIZADO',
-        motorista: 'Carlos Motorista',
+        motorista: 'José Roberto Souza',
         observacoes: 'Bairros ➔ IFRO Ji-Paraná',
       },
     })
@@ -568,26 +585,28 @@ async function main() {
     ],
   })
 
-  console.log('\n✨ RESET E SEED CONCLUÍDOS COM SUCESSO! (CONTEXTO: JI-PARANÁ / RO) ✨\n')
-  console.log('📍 FACULDADE PRINCIPAL: IFRO - Campus Ji-Paraná')
-  console.log('📍 ENDEREÇO IFRO: Rua Teresina, 1240 - Bairro Beira Rio, Ji-Paraná - RO, CEP: 76907-528')
-  console.log('📍 ROTAS: Bairros ➔ IFRO Ji-Paraná (Ida) / IFRO Ji-Paraná ➔ Bairros (Volta)')
+  console.log('\n✨ RESET E SEED CONCLUÍDOS COM SUCESSO! (NOMES REAIS + JI-PARANÁ / RO) ✨\n')
+  console.log('🔑 LISTA DE CREDENCIAIS DE TESTE COM NOMES PESSOAIS REAIS:')
   console.log('===================================================================')
   console.log('1. ADMINISTRADOR:')
+  console.log('   - Nome: Carlos Eduardo Silva')
   console.log('   - Email: admin@unibus.com')
   console.log('   - Senha: 123')
   console.log('   - Perfil: ADMIN / Status: ATIVO')
   console.log('-------------------------------------------------------------------')
   console.log('2. ASSOCIADO APROVADO:')
+  console.log('   - Nome: Mariana Oliveira Santos')
   console.log('   - Email: aprovado@unibus.com')
   console.log('   - Senha: 123')
   console.log('   - Perfil: ASSOCIADO / Status: APROVADO / ATIVO')
-  console.log('   - Instituição: IFRO - Campus Ji-Paraná')
+  console.log('   - Faculdade: IFRO - Campus Ji-Paraná')
   console.log('-------------------------------------------------------------------')
   console.log('3. ASSOCIADO PENDENTE:')
+  console.log('   - Nome: Lucas Gabriel Souza')
   console.log('   - Email: pendente@unibus.com')
   console.log('   - Senha: 123')
   console.log('   - Perfil: ASSOCIADO / Status: PENDENTE')
+  console.log('   - Faculdade: IFRO - Campus Ji-Paraná')
   console.log('===================================================================\n')
 }
 
